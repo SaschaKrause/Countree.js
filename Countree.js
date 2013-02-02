@@ -8,8 +8,8 @@
 
 (function(exports) {
 
-  exports.awesome = function() {
-    return 'awesome';
-  };
+    exports.awesome = function() {
+        return 'awesome';
+    };
 
 }(typeof exports === 'object' && exports || this));
