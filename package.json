@@ -1,0 +1,31 @@
+{
+  "name": "Countree",
+  "description": "The best project ever.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/SaschaKrause/Countree",
+  "author": {
+    "name": "Sascha Krause",
+    "email": "mr.sascha.krause@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SaschaKrause/Countree.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SaschaKrause/Countree/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/SaschaKrause/Countree/blob/master/LICENSE-MIT"
+    }
+  ],
+  "main": "./Countree.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "grunt": "~0.3.17"
+  },
+  "keywords": []
+}
