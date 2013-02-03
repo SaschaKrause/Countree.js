@@ -2,12 +2,12 @@
 * https://github.com/SaschaKrause/Countree
 * Copyright (c) 2013 Sascha Krause; Licensed MIT */
 
-// TODO: [FEATURE]  provide doubleDigits (fill left zero) for the returned TimeObject
 // TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
 // TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
 // TODO: [FEATURE]  provide the possibility to register some kind of event listener to a countree which is called on custom events (e.g. "5 minutes before counter ends")
 // TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug that a second is "missing" (because of rounding issues)
 // TODO: [TESTS]    add some Jasmine tests
+// TODO: [FEATURE]  get progress in % (e.g. 13% are already counted down/up)
 
 
 (function (exports) {
@@ -223,7 +223,9 @@
 
 
     /**
-     * should rename this to something more precise
+     * should rename this to something more precise.
+     * Because there should only be one instance of this object, it is ok to add its methods via constructor (and not via
+     * prototype).
      * @constructor
      */
     function TimeObject() {
@@ -255,8 +257,24 @@
             return this;
         };
 
+        this.getMillisecondsAsTripleDigitString = function() {
+            return fillLeftZero(this.milliseconds, 3);
+        };
+
+        this.getSecondsAsDoubleDigitString = function() {
+            return fillLeftZero(this.seconds, 2);
+        };
+
+        this.getMinutesAsDoubleDigitString = function() {
+            return fillLeftZero(this.minutes, 2);
+        };
+
+        this.getHoursAsDoubleDigitString = function() {
+            return fillLeftZero(this.hours, 2);
+        };
+
         this.toString = function () {
-            return this.days + " days,  " + this.hours + ":" + this.minutes + ":" + this.seconds + ":" + this.milliseconds;
+            return this.days + " days,  " + this.getHoursAsDoubleDigitString() + ":" + this.getMinutesAsDoubleDigitString() + ":" + this.getSecondsAsDoubleDigitString() + ":" + this.getMillisecondsAsTripleDigitString();
         };
     }
 
@@ -274,6 +292,14 @@
         return a;
     }
 
+    function fillLeftZero(target, targetLength) {
+        var result = '' + target;
+
+        while (result.length < targetLength) {
+            result = '0' + result;
+        }
+        return result;
+    }
 
     /************************************
      Exports
@@ -283,4 +309,4 @@
     exports.CountResult = CountResult;
     exports.TimeObject = TimeObject;
 
-}(typeof exports === 'object' && exports || this));
+}(typeof exports === 'object' && exports || window));
