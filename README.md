@@ -1,7 +1,9 @@
 #Countree
 ========
 
-The best project ever.
+[![Build Status](https://travis-ci.org/[SaschaKrause]/[Countree].png)](https://travis-ci.org/[SaschaKrause]/[Countree])
+
+Test
 
 ## Getting Started
 ### On the server
