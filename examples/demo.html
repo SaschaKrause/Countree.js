@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>countree test</title>
+    <meta charset="UTF-8">
+
+</head>
+<body>
+
+
+<div id="counter" style="font-size: 20pt">--</div>
+<input type="button" onclick="restart()" value="(re)start">
+<input type="button" onclick="suspend()" value="suspend">
+<input type="button" onclick="resume()" value="resume">
+
+
+<script type="text/javascript" src="../Countree.js"></script>
+<script type="text/javascript">
+
+    (function () {
+
+        var result = new CountResult();
+        result.update(10);
+
+        console.log(result.overallMillisecondsLeft);
+        var counterOption = {
+            direction: 'down',
+            minutes: 0,
+            seconds: 15,
+            hours: 0,
+            days: 3 ,
+            updateIntervalInMilliseconds: 50
+        };
+
+        var counter = new Countree(counterOption);
+
+        window.restart = function () {
+            counter.start(onCountInterval);
+        };
+
+        window.suspend = function () {
+            counter.suspend();
+        };
+
+        window.resume = function () {
+            counter.resume();
+        };
+
+        function onCountInterval(countResult) {
+            window.document.getElementById('counter').innerHTML=countResult.getAsTimeObject().toString();
+        }
+    })();
+</script>
+
+</body>
+</html>

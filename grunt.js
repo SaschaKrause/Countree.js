@@ -53,7 +53,8 @@ module.exports = function (grunt) {
                 sub: true,
                 undef: true,
                 boss: true,
-                eqnull: true
+                eqnull: true,
+                browser: true
             },
             globals: {
                 exports: true,
@@ -64,6 +65,6 @@ module.exports = function (grunt) {
     });
 
     // Default task.
-    grunt.registerTask('default', 'lint test concat min');
+    grunt.registerTask('default', 'test lint concat min');
 
 };
