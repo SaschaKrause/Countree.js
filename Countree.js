@@ -6,13 +6,13 @@
  * Licensed under the MIT license.
  */
 
-// TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
-// TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
 // TODO: [FEATURE]  provide the possibility to register some kind of event listener to a countree which is called on custom events (e.g. "5 minutes before counter ends")
-// TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug that a second is "missing" (because of rounding issues)
-// TODO: [TESTS]    add some Jasmine tests
+// TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
 // TODO: [FEATURE]  get progress in % (e.g. 13% are already counted down/up)
-
+// TODO: [FEATURE]  add AMD-loader ability
+// TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug that a second is "missing" (because of rounding issues)
+// TODO: [TEST]     add some Jasmine tests
+// TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
 
 (function (exports) {
 
@@ -90,9 +90,11 @@
         extendObjectBy(this.options, configOptions);
 
 
-        function onCountingInterval(callback, countStartDate, totalMillisecondsToGo) {
-            //directly update the countResult BEFORE the interval starts (so that the users callback is invoked ediateeatl//y)
+        function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
+            //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
             updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback);
+
+            var timeToAddWhenResumed = resumed ? millisecondsForContinuePoint : 0;
 
             var calculateMilliseconds = function () {
                 // when counting down
@@ -101,7 +103,7 @@
                 }
                 //when counting up
                 else if (that.options.direction === countDirection.UP) {
-                    millisecondsForContinuePoint = new Date().getTime() - countStartDate.getTime();
+                    millisecondsForContinuePoint = (new Date().getTime() + timeToAddWhenResumed) - countStartDate.getTime();
                 }
 
                 // update the result and forward it to the users callback as a countResult object
@@ -176,7 +178,7 @@
 
 
             // start the counter and remember the intervalId as reference for later (e.g. for restarting or suspending)
-            intervalRef = onCountingInterval(intervalCallbackRef, new Date(), getTotalMillisecondsToGoFromConfig());
+            intervalRef = onCountingInterval(intervalCallbackRef, new Date(), getTotalMillisecondsToGoFromConfig(), false);
             that.isCounting = true;
         }
 
@@ -189,7 +191,7 @@
         function resume() {
             // only continue counting if the counter isn't already active and the users callback is available
             if (!that.isCounting && intervalCallbackRef) {
-                intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint);
+                intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint, true);
                 that.isCounting = true;
             }
         }
