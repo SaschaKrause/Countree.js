@@ -288,7 +288,7 @@
                     notifyTmp.callback(that.countreeReference, milliseconds);
                 }
             }
-        }
+        };
 
 
     }
