@@ -10,6 +10,7 @@
 // TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
 // TODO: [FEATURE]  get progress in % (e.g. 13% are already counted down/up)
 // TODO: [FEATURE]  add AMD-loader ability
+// TODO: [FEATURE]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
 // TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug that a second is "missing" (because of rounding issues)
 // TODO: [TEST]     add some Jasmine tests
 // TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
@@ -73,12 +74,15 @@
             hours: 0,
             days: 0,
             updateIntervalInMilliseconds: 1000,
-            direction: countDirection.UP
+            direction: countDirection.UP,
+            name: 'untitled'
         };
+
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
         // This result will be provided as parameter to the users callback (@see start(callback))
-        this.countResult = new CountResult();
+        this.countResult = new CountResult(this);
+
 
         /**
          * Indicates if the counter is currently active by counting down or up.
@@ -111,7 +115,7 @@
                 callback(that.countResult);
 
                 // need to check if the counter is done with counting
-                checkIfCounterFinished(millisecondsForContinuePoint, getTotalMillisecondsToGoFromConfig(), callback);
+                checkIfCounterFinished(millisecondsForContinuePoint, getTotalMillisecondsFromObject(that.options), callback);
             };
 
             return setInterval(calculateMilliseconds, that.options.updateIntervalInMilliseconds);
@@ -135,15 +139,6 @@
             callback(that.countResult);
         }
 
-
-        function getTotalMillisecondsToGoFromConfig() {
-
-            return that.options.milliseconds +
-                (that.options.seconds * 1e3) + // 1000
-                (that.options.minutes * 6e4) + // 1000 * 60
-                (that.options.hours * 36e5) + // 1000 * 60 * 60
-                (that.options.days * 864e5);  // 1000 * 60 * 60 * 24
-        }
 
         function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
             if (that.options.direction === countDirection.UP) {
@@ -178,7 +173,8 @@
 
 
             // start the counter and remember the intervalId as reference for later (e.g. for restarting or suspending)
-            intervalRef = onCountingInterval(intervalCallbackRef, new Date(), getTotalMillisecondsToGoFromConfig(), false);
+            intervalRef = onCountingInterval(intervalCallbackRef, new Date(), getTotalMillisecondsFromObject(that.options), false);
+            that.countResult.countNotifier.resetNotifier();
             that.isCounting = true;
         }
 
@@ -196,29 +192,41 @@
             }
         }
 
+        function notifyAt(notifyConfig, callback) {
+//            that.countResult.addNotifier(getTotalMillisecondsFromObject(notifyConfig), callback, that.options.direction);
+            that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
+        }
+
         /************************************
          Public Methods
          ************************************/
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
+        this.notifyAt = notifyAt;
     }
 
     /**
      *
      * @constructor
      */
-    function CountResult() {
+    function CountResult(countreeRef) {
+
+        var that = this;
 
         this.overallMillisecondsLeft = 0;
+
+        this.countNotifier = new CountNotifier(countreeRef);
 
         // the timeObject contains the milliseconds left (or to go) in a formatted object. So one could do something like
         // this: countResult.getAsTimeObject().minutes
         this.timeObject = new TimeObject();
 
         this.update = function (milliseconds) {
-            this.overallMillisecondsLeft = milliseconds;
-            return this.overallMillisecondsLeft;
+            that.overallMillisecondsLeft = milliseconds;
+            //every time the milliseconds are updated, we need to check if there is a notifier that listens to that
+            that.countNotifier.checkIfNeedToNotify(milliseconds);
+            return that.overallMillisecondsLeft;
         };
 
         this.getAsTimeObject = function () {
@@ -227,6 +235,63 @@
         };
     }
 
+
+    function CountNotifier(countreeRef) {
+        var that = this;
+
+        this.notifyAtArray = [];
+        this.countreeReference = countreeRef;
+
+        /**
+         * Add a notifier to the CountResult which will invoke the callback when the millisecondsToNotify are reached while counting (notifier will be added to the notifyAtArray property).
+         * @param notifyConfig the config which the milliseconds are calculated from (used to get the time at which the
+         * callback should be triggered)
+         * @param callback triggered when the millisecondsToNotify are reached when counting
+         * @param countingDirection the direction the counter is currently counting ('down' or 'up')
+         */
+        this.addNotifier = function (notifyConfig, callback, countingDirection) {
+            that.notifyAtArray.push({
+                millisecondsToNotify: getTotalMillisecondsFromObject(notifyConfig),
+                callback: callback,
+                alreadyFired: false,
+                countingDirection: countingDirection
+            });
+        };
+
+        /**
+         * Resets the notifier so that it is able to fires again when needed.
+         */
+        this.resetNotifier = function () {
+            for (var i in that.notifyAtArray) {
+                that.notifyAtArray[i].alreadyFired = false;
+            }
+        };
+
+        this.checkIfNeedToNotify = function (milliseconds) {
+            var notifyTmp = {};
+            var needToNotifyWhenCountingDown = false;
+            var needToNotifyWhenCountingUp = false;
+
+            for (var i in that.notifyAtArray) {
+                notifyTmp = that.notifyAtArray[i];
+                needToNotifyWhenCountingDown = (!notifyTmp.alreadyFired &&
+                    notifyTmp.countingDirection === "down" &&
+                    notifyTmp.millisecondsToNotify >= milliseconds);
+
+                needToNotifyWhenCountingUp = (!notifyTmp.alreadyFired &&
+                    notifyTmp.countingDirection === "up" &&
+                    notifyTmp.millisecondsToNotify <= milliseconds);
+
+
+                if (needToNotifyWhenCountingDown || needToNotifyWhenCountingUp) {
+                    notifyTmp.alreadyFired = true;
+                    notifyTmp.callback(that.countreeReference, milliseconds);
+                }
+            }
+        }
+
+
+    }
 
     /**
      * should rename this to something more precise.
@@ -263,19 +328,19 @@
             return this;
         };
 
-        this.getMillisecondsAsTripleDigitString = function() {
+        this.getMillisecondsAsTripleDigitString = function () {
             return fillLeftZero(this.milliseconds, 3);
         };
 
-        this.getSecondsAsDoubleDigitString = function() {
+        this.getSecondsAsDoubleDigitString = function () {
             return fillLeftZero(this.seconds, 2);
         };
 
-        this.getMinutesAsDoubleDigitString = function() {
+        this.getMinutesAsDoubleDigitString = function () {
             return fillLeftZero(this.minutes, 2);
         };
 
-        this.getHoursAsDoubleDigitString = function() {
+        this.getHoursAsDoubleDigitString = function () {
             return fillLeftZero(this.hours, 2);
         };
 
@@ -305,6 +370,16 @@
             result = '0' + result;
         }
         return result;
+    }
+
+
+    function getTotalMillisecondsFromObject(object) {
+
+        return object.milliseconds || 0 +
+            ((object.seconds || 0) * 1e3) + // 1000
+            ((object.minutes || 0) * 6e4) + // 1000 * 60
+            ((object.hours || 0) * 36e5) + // 1000 * 60 * 60
+            ((object.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
     }
 
     /************************************

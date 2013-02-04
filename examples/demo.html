@@ -20,12 +20,13 @@
     (function () {
 
         var counterOption = {
-            direction: 'up',
-            minutes: 4,
-            seconds: 60,
+            direction: 'down',
+            minutes: 1,
+            seconds: 20,
             hours: 0,
-            days: 0 ,
-            updateIntervalInMilliseconds: 50
+            days: 0,
+            updateIntervalInMilliseconds: 100,
+            name: 'my first counter'
         };
 
         var counter = new Countree(counterOption);
@@ -43,8 +44,24 @@
         };
 
         function onCountInterval(countResult) {
-            window.document.getElementById('counter').innerHTML=countResult.getAsTimeObject().toString();
+            window.document.getElementById('counter').innerHTML = countResult.getAsTimeObject().toString();
         }
+
+
+        counter.notifyAt({
+            minutes: 1,
+            seconds: 2
+        }, function (countreeReference, milliseconds) {
+            console.log("noch 1 ", countreeReference.options.name, "", milliseconds);
+        });
+
+        counter.notifyAt({
+            seconds: 15
+        }, function (countreeReference, milliseconds) {
+            console.log("noch 15 ", countreeReference.options.name, "", milliseconds);
+        });
+
+
     })();
 </script>
 
