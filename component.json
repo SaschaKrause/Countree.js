@@ -2,6 +2,13 @@
     "name": "Countree",
     "version": "0.0.1",
     "main": [
-        "./Countree.js"
+        "./dist/Countree.js"
+    ],
+    "author": {
+        "name": "Sascha Krause",
+        "web": "http://github.com/SaschaKrause/"
+    },
+    "keywords": [
+        "counter"
     ]
 }
