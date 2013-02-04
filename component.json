@@ -1,0 +1,7 @@
+{
+    "name": "Countree",
+    "version": "0.0.1",
+    "main": [
+        "./Countree.js"
+    ]
+}
