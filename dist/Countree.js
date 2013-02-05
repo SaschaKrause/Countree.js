@@ -2,7 +2,6 @@
 * https://github.com/SaschaKrause/Countree
 * Copyright (c) 2013 Sascha Krause; Licensed MIT */
 
-// TODO: [FEATURE]  notify when counter finished
 // TODO: [FEATURE]  provide the possibility to register some kind of event listener to a countree which is called on custom events (e.g. "5 minutes before counter ends")
 // TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
 // TODO: [FEATURE]  get progress in % (e.g. 13% are already counted down/up)
@@ -139,7 +138,7 @@
         function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
             if (that.options.direction === countDirection.UP) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
-//                    console.log("--FERTIG MITHOCHZÄHLEN");
+                    that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
@@ -147,7 +146,7 @@
                 if (millisecondsProceeded <= 0) {
                     that.countResult.update(0);
 //                callback(that.countResult);
-//                    console.log("--FERTIG MITRUNTERZÄHLEN");
+                    that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
@@ -159,6 +158,8 @@
 
 
         function start(callback) {
+            var millisecondsAtStart = that.options.direction === countDirection.DOWN ? getTotalMillisecondsFromObject(that.options) : 0;
+
             //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
             intervalCallbackRef = callback;
 
@@ -171,12 +172,17 @@
             // start the counter and remember the intervalId as reference for later (e.g. for restarting or suspending)
             intervalRef = onCountingInterval(intervalCallbackRef, new Date(), getTotalMillisecondsFromObject(that.options), false);
             that.countResult.countNotifier.resetNotifier();
+
+            that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_START, millisecondsAtStart);
             that.isCounting = true;
         }
 
         function suspend() {
             // clear the interval as it stops the further counting
             clearIntervalFromCountree();
+            if(that.isCounting){
+                that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_SUSPEND, millisecondsForContinuePoint);
+            }
             that.isCounting = false;
         }
 
@@ -184,12 +190,12 @@
             // only continue counting if the counter isn't already active and the users callback is available
             if (!that.isCounting && intervalCallbackRef) {
                 intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint, true);
+                that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESUME, millisecondsForContinuePoint);
                 that.isCounting = true;
             }
         }
 
         function notifyAt(notifyConfig, callback) {
-//            that.countResult.addNotifier(getTotalMillisecondsFromObject(notifyConfig), callback, that.options.direction);
             that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
         }
 
@@ -221,7 +227,7 @@
         this.update = function (milliseconds) {
             that.overallMillisecondsLeft = milliseconds;
             //every time the milliseconds are updated, we need to check if there is a notifier that listens to that
-            that.countNotifier.checkIfNeedToNotify(milliseconds);
+            that.countNotifier.notifyIfNecessary(milliseconds);
             return that.overallMillisecondsLeft;
         };
 
@@ -234,13 +240,22 @@
 
     function CountNotifier(countreeRef, millisecondsStartingPoint) {
         var that = this;
+        var notifyAtTimeArray = [];
+        var notifyAtEventArray = [];
+
         this.millisecondsStartingPoint = millisecondsStartingPoint;
-        this.notifyAtArray = [];
         this.countreeReference = countreeRef;
 
-        var when = {
+        var WHEN = {
             BEFORE_END: 'beforeEnd',
             AFTER_START: 'afterStart'
+        };
+
+        this.EVENT = {
+            ON_START: 'onStart',
+            ON_FINISH: 'onFinish',
+            ON_RESUME: 'onResume',
+            ON_SUSPEND: 'onSuspend'
         };
 
         /**
@@ -251,25 +266,38 @@
          * @param countingDirection the direction the counter is currently counting ('down' or 'up')
          */
         this.addNotifier = function (notifyConfig, callback, countingDirection) {
-            that.notifyAtArray.push({
-                millisecondsToNotify: getTotalMillisecondsFromObject(notifyConfig),
-                when: notifyConfig.when || when.BEFORE_END,
-                callback: callback,
-                alreadyFired: false,
-                countingDirection: countingDirection
-            });
+            if (notifyConfig.event) {
+                notifyAtEventArray.push({
+                    event: notifyConfig.event,
+                    callback: callback,
+                    countingDirection: countingDirection
+                });
+            }
+            else {
+                notifyAtTimeArray.push({
+                    millisecondsToNotify: getTotalMillisecondsFromObject(notifyConfig),
+                    when: notifyConfig.when || WHEN.BEFORE_END,
+                    callback: callback,
+                    alreadyFired: false,
+                    countingDirection: countingDirection
+                });
+            }
+
         };
 
         /**
-         * Resets the notifier so that it is able to fires again when needed.
+         * Resets the notifier so that it is able to fire again when needed.
          */
         this.resetNotifier = function () {
-            for (var i in that.notifyAtArray) {
-                that.notifyAtArray[i].alreadyFired = false;
+            for (var i in notifyAtTimeArray) {
+                notifyAtTimeArray[i].alreadyFired = false;
+            }
+            for (var k in notifyAtTimeArray) {
+                notifyAtTimeArray[k].alreadyFired = false;
             }
         };
 
-        this.checkIfNeedToNotify = function (milliseconds) {
+        this.notifyIfNecessary = function (milliseconds) {
             var notifyTmp = {};
             var needToNotifyWhenCountingDownBeforeEnd = false;
             var needToNotifyWhenCountingDownAfterStart = false;
@@ -277,26 +305,27 @@
             var needToNotifyWhenCountingUpAfterStart = false;
 
 
-            for (var i in that.notifyAtArray) {
-                notifyTmp = that.notifyAtArray[i];
+            // loop through all time notifications
+            for (var i in notifyAtTimeArray) {
+                notifyTmp = notifyAtTimeArray[i];
                 needToNotifyWhenCountingDownBeforeEnd = (!notifyTmp.alreadyFired &&
                     notifyTmp.countingDirection === "down" &&
-                    notifyTmp.when === when.BEFORE_END &&
+                    notifyTmp.when === WHEN.BEFORE_END &&
                     notifyTmp.millisecondsToNotify >= milliseconds);
 
                 needToNotifyWhenCountingDownAfterStart = (!notifyTmp.alreadyFired &&
                     notifyTmp.countingDirection === "down" &&
-                    notifyTmp.when === when.AFTER_START &&
+                    notifyTmp.when === WHEN.AFTER_START &&
                     that.millisecondsStartingPoint - notifyTmp.millisecondsToNotify >= milliseconds);
 
                 needToNotifyWhenCountingUpBeforeEnd = (!notifyTmp.alreadyFired &&
                     notifyTmp.countingDirection === "up" &&
-                    notifyTmp.when === when.BEFORE_END &&
-                    that.millisecondsStartingPoint -notifyTmp.millisecondsToNotify <= milliseconds);
+                    notifyTmp.when === WHEN.BEFORE_END &&
+                    that.millisecondsStartingPoint - notifyTmp.millisecondsToNotify <= milliseconds);
 
                 needToNotifyWhenCountingUpAfterStart = (!notifyTmp.alreadyFired &&
                     notifyTmp.countingDirection === "up" &&
-                    notifyTmp.when === when.AFTER_START &&
+                    notifyTmp.when === WHEN.AFTER_START &&
                     notifyTmp.millisecondsToNotify <= milliseconds);
 
                 if (needToNotifyWhenCountingDownBeforeEnd || needToNotifyWhenCountingDownAfterStart ||
@@ -307,7 +336,18 @@
             }
         };
 
-
+        /**
+         * Fire events and invoke the callbacks if there are any registered.
+         * @param event the fired event name
+         * @param milliseconds the milliseconds at the counting time at which the event has been fired
+         */
+        this.fireNotificationEvent = function (event, milliseconds) {
+            for (var i in notifyAtEventArray) {
+                if(notifyAtEventArray[i].event === event) {
+                    notifyAtEventArray[i].callback(that.countreeReference,milliseconds);
+                }
+            }
+        };
     }
 
     /**

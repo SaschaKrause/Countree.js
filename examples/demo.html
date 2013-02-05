@@ -20,9 +20,9 @@
     (function () {
 
         var counterOption = {
-            direction: 'down',
-            minutes: 10,
-            seconds: 60,
+            direction: 'up',
+            minutes: 0,
+            seconds: 40,
             hours: 0,
             days: 0,
             updateIntervalInMilliseconds: 50,
@@ -48,20 +48,29 @@
         }
 
 
-        counter.notifyAt({
-            seconds: 10,
-            when: 'beforeEnd'
-        }, function (countreeReference, milliseconds) {
+        counter.notifyAt({seconds: 10, when: 'beforeEnd'}, function (countreeReference, milliseconds) {
             console.log("just 10 seconds left @", countreeReference.options.name, "", milliseconds);
         });
 
-        counter.notifyAt({
-            seconds: 10,
-            when: 'afterStart'
-        }, function (countreeReference, milliseconds) {
+        counter.notifyAt({seconds: 10, when: 'afterStart'}, function (countreeReference, milliseconds) {
             console.log("the first 10 seconds are already over @", countreeReference.options.name, "", milliseconds);
         });
 
+        counter.notifyAt({event: 'onStart'}, function (countreeReference, milliseconds) {
+            console.log("counter started", countreeReference.options.name, milliseconds);
+        });
+
+        counter.notifyAt({event: 'onFinish'}, function (countreeReference, milliseconds) {
+            console.log("counter finished", countreeReference.options.name, milliseconds);
+        });
+
+        counter.notifyAt({event: 'onSuspend'}, function (countreeReference, milliseconds) {
+            console.log("counter suspended", countreeReference.options.name, milliseconds);
+        });
+
+        counter.notifyAt({event: 'onResume'}, function (countreeReference, milliseconds) {
+            console.log("counter resumed", countreeReference.options.name, milliseconds);
+        });
 
     })();
 </script>
