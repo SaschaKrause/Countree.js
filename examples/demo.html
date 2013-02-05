@@ -21,11 +21,11 @@
 
         var counterOption = {
             direction: 'down',
-            minutes: 1,
-            seconds: 20,
+            minutes: 10,
+            seconds: 60,
             hours: 0,
             days: 0,
-            updateIntervalInMilliseconds: 100,
+            updateIntervalInMilliseconds: 50,
             name: 'my first counter'
         };
 
@@ -49,16 +49,17 @@
 
 
         counter.notifyAt({
-            minutes: 1,
-            seconds: 2
+            seconds: 10,
+            when: 'beforeEnd'
         }, function (countreeReference, milliseconds) {
-            console.log("noch 1 ", countreeReference.options.name, "", milliseconds);
+            console.log("just 10 seconds left @", countreeReference.options.name, "", milliseconds);
         });
 
         counter.notifyAt({
-            seconds: 15
+            seconds: 10,
+            when: 'afterStart'
         }, function (countreeReference, milliseconds) {
-            console.log("noch 15 ", countreeReference.options.name, "", milliseconds);
+            console.log("the first 10 seconds are already over @", countreeReference.options.name, "", milliseconds);
         });
 
 
