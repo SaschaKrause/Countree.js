@@ -1,7 +1,7 @@
 #Countree
 ========
 
-[![Build Status](https://travis-ci.org/SaschaKrause/Countree.png)](https://travis-ci.org/SaschaKrause/Countree)
+[![Build Status](https://travis-ci.org/SaschaKrause/Countree.js.png)](https://travis-ci.org/SaschaKrause/Countree.js)
 
 Test
 
