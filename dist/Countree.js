@@ -222,7 +222,7 @@
 
         // the timeObject contains the milliseconds left (or to go) in a formatted object. So one could do something like
         // this: countResult.getAsTimeObject().minutes
-        this.timeObject = new TimeObject();
+        var timeObject_ = new TimeObject();
 
         this.update = function (milliseconds) {
             that.overallMillisecondsLeft = milliseconds;
@@ -233,7 +233,7 @@
 
         this.getAsTimeObject = function () {
             // update the timeObject and return its new value
-            return this.timeObject.update(this.overallMillisecondsLeft);
+            return timeObject_.update(that.overallMillisecondsLeft);
         };
     }
 
