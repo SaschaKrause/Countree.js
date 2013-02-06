@@ -216,8 +216,8 @@
         /************************************
          Private properties
          ************************************/
-        var that = this,
-            overallMillisecondsLeft = 0;
+        var that = this;
+        var overallMillisecondsLeft = 0;
         // the timeObject contains the milliseconds left (or to go) in a formatted object. So one could do something like
         // this: countResult.getAsTimeObject().minutes
         var timeObject_ = new TimeObject();
