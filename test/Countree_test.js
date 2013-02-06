@@ -32,7 +32,7 @@ exports['CountResult'] = {
     'milliseconds to timeObject converting: valid': function (test) {
         test.expect(6);
 
-        test.equal(this.countResult.overallMillisecondsLeft, 446582010);
+        test.equal(this.countResult.millisecondsLeft(), 446582010);
         test.equal(this.countResult.getAsTimeObject().milliseconds, 10);
         test.equal(this.countResult.getAsTimeObject().seconds, 2);
         test.equal(this.countResult.getAsTimeObject().minutes, 3);
