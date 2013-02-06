@@ -243,7 +243,7 @@
             return timeObject_.update(overallMillisecondsLeft);
         };
 
-        this.millisecondsLeft = function() {
+        this.getMillisecondsLeft = function() {
           return overallMillisecondsLeft;
         };
     }
