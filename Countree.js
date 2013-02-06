@@ -237,7 +237,7 @@
 
         this.getAsTimeObject = function () {
             // update the timeObject and return its new value
-            return this.timeObject.update(this.overallMillisecondsLeft);
+            return that.timeObject.update(that.overallMillisecondsLeft);
         };
     }
 
