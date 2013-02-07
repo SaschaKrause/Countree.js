@@ -81,8 +81,6 @@
         this.isCounting = false;
 
 
-
-
         function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
             //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
             updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback);
@@ -285,10 +283,10 @@
          * Resets the notifier so that it is able to fire again when needed.
          */
         function resetNotifier() {
-            for (var i in notifyAtTimeArray) {
+            for (var i = 0; i < notifyAtTimeArray.length; ++i) {
                 notifyAtTimeArray[i].alreadyFired = false;
             }
-            for (var k in notifyAtTimeArray) {
+            for (var k = 0; k < notifyAtTimeArray.length; ++k) {
                 notifyAtTimeArray[k].alreadyFired = false;
             }
         }
@@ -302,7 +300,7 @@
 
 
             // loop through all time notifications
-            for (var i in notifyAtTimeArray) {
+            for (var i = 0; i < notifyAtTimeArray.length; ++i) {
                 notifyTmp = notifyAtTimeArray[i];
                 needToNotifyWhenCountingDownBeforeEnd = (!notifyTmp.alreadyFired &&
                     notifyTmp.countingDirection === "down" &&
@@ -338,9 +336,9 @@
          * @param milliseconds the milliseconds at the counting time at which the event has been fired
          */
         function fireNotificationEvent(event, milliseconds) {
-            for (var i in notifyAtEventArray) {
-                if(notifyAtEventArray[i].event === event) {
-                    notifyAtEventArray[i].callback(that.countreeReference,milliseconds);
+            for (var i = 0; i < notifyAtEventArray.length; ++i) {
+                if (notifyAtEventArray[i].event === event) {
+                    notifyAtEventArray[i].callback(that.countreeReference, milliseconds);
                 }
             }
         }
