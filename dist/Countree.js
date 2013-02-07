@@ -1,4 +1,4 @@
-/*! Countree - v0.0.1 - 2013-02-06
+/*! Countree - v0.0.1 - 2013-02-07
 * https://github.com/SaschaKrause/Countree
 * Copyright (c) 2013 Sascha Krause; Licensed MIT */
 
@@ -21,19 +21,12 @@
      */
     function Countree(configOptions) {
 
-
-        /************************************
-         Private properties
-         ************************************/
-
-
         var that = this;
 
-        var countDirection = {
+        var COUNT_DIRECTION = {
             DOWN: 'down',
             UP: 'up'
         };
-
 
         /**
          * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending
@@ -55,10 +48,6 @@
          */
         var intervalCallbackRef;
 
-        /************************************
-         Public properties
-         ************************************/
-
 
         this.version = '0.0.1';
 
@@ -71,10 +60,9 @@
             hours: 0,
             days: 0,
             updateIntervalInMilliseconds: 1000,
-            direction: countDirection.UP,
+            direction: COUNT_DIRECTION.UP,
             name: 'untitled'
         };
-
         // update/extend the default options with the user config options
         extendObjectBy(this.options, configOptions);
 
@@ -89,6 +77,8 @@
         this.isCounting = false;
 
 
+
+
         function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
             //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
             updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback);
@@ -97,11 +87,11 @@
 
             var calculateMilliseconds = function () {
                 // when counting down
-                if (that.options.direction === countDirection.DOWN) {
+                if (that.options.direction === COUNT_DIRECTION.DOWN) {
                     millisecondsForContinuePoint = totalMillisecondsToGo - (new Date().getTime() - countStartDate.getTime());
                 }
                 //when counting up
-                else if (that.options.direction === countDirection.UP) {
+                else if (that.options.direction === COUNT_DIRECTION.UP) {
                     millisecondsForContinuePoint = (new Date().getTime() + timeToAddWhenResumed) - countStartDate.getTime();
                 }
 
@@ -123,11 +113,11 @@
          */
         function updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback) {
             // when counting down
-            if (that.options.direction === countDirection.DOWN) {
+            if (that.options.direction === COUNT_DIRECTION.DOWN) {
                 that.countResult.update(totalMillisecondsToGo);
             }
             //when counting up
-            else if (that.options.direction === countDirection.UP) {
+            else if (that.options.direction === COUNT_DIRECTION.UP) {
                 that.countResult.update(0);
             }
 
@@ -136,13 +126,13 @@
 
 
         function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
-            if (that.options.direction === countDirection.UP) {
+            if (that.options.direction === COUNT_DIRECTION.UP) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
                     that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
-            else if (that.options.direction === countDirection.DOWN) {
+            else if (that.options.direction === COUNT_DIRECTION.DOWN) {
                 if (millisecondsProceeded <= 0) {
                     that.countResult.update(0);
 //                callback(that.countResult);
@@ -158,7 +148,7 @@
 
 
         function start(callback) {
-            var millisecondsAtStart = that.options.direction === countDirection.DOWN ? getTotalMillisecondsFromObject(that.options) : 0;
+            var millisecondsAtStart = that.options.direction === COUNT_DIRECTION.DOWN ? getTotalMillisecondsFromObject(that.options) : 0;
 
             //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
             intervalCallbackRef = callback;
@@ -199,9 +189,6 @@
             that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
         }
 
-        /************************************
-         Public Methods
-         ************************************/
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
@@ -213,37 +200,36 @@
      * @constructor
      */
     function CountResult(countreeRef, millisecondsStartingPoint) {
-        /************************************
-         Private properties
-         ************************************/
         var that = this;
         var overallMillisecondsLeft = 0;
+
         // the timeObject contains the milliseconds left (or to go) in a formatted object. So one could do something like
         // this: countResult.getAsTimeObject().minutes
         var timeObject_ = new TimeObject();
 
-        /************************************
-         Public properties
-         ************************************/
         this.countNotifier = new CountNotifier(countreeRef, this.millisecondsStartingPoint);
 
-        this.update = function (milliseconds) {
+
+        function update(milliseconds) {
             overallMillisecondsLeft = milliseconds;
             //every time the milliseconds are updated, we need to check if there is a notifier that listens to that
             that.countNotifier.notifyIfNecessary(milliseconds);
             return overallMillisecondsLeft;
-        };
+        }
 
-        this.getAsTimeObject = function () {
+        function getAsTimeObject() {
             // update the timeObject and return its new value
             return timeObject_.update(overallMillisecondsLeft);
-        };
+        }
 
-        this.getMillisecondsLeft = function() {
+        function getMillisecondsLeft() {
           return overallMillisecondsLeft;
-        };
-    }
+        }
 
+        this.update = update;
+        this.getAsTimeObject = getAsTimeObject;
+        this.getMillisecondsLeft = getMillisecondsLeft;
+    }
 
     function CountNotifier(countreeRef, millisecondsStartingPoint) {
         var that = this;
@@ -272,7 +258,7 @@
          * @param callback triggered when the millisecondsToNotify are reached when counting
          * @param countingDirection the direction the counter is currently counting ('down' or 'up')
          */
-        this.addNotifier = function (notifyConfig, callback, countingDirection) {
+        function addNotifier(notifyConfig, callback, countingDirection) {
             if (notifyConfig.event) {
                 notifyAtEventArray.push({
                     event: notifyConfig.event,
@@ -289,22 +275,21 @@
                     countingDirection: countingDirection
                 });
             }
-
-        };
+        }
 
         /**
          * Resets the notifier so that it is able to fire again when needed.
          */
-        this.resetNotifier = function () {
+        function resetNotifier() {
             for (var i in notifyAtTimeArray) {
                 notifyAtTimeArray[i].alreadyFired = false;
             }
             for (var k in notifyAtTimeArray) {
                 notifyAtTimeArray[k].alreadyFired = false;
             }
-        };
+        }
 
-        this.notifyIfNecessary = function (milliseconds) {
+        function notifyIfNecessary(milliseconds) {
             var notifyTmp = {};
             var needToNotifyWhenCountingDownBeforeEnd = false;
             var needToNotifyWhenCountingDownAfterStart = false;
@@ -341,20 +326,26 @@
                     notifyTmp.callback(that.countreeReference, milliseconds);
                 }
             }
-        };
+        }
 
         /**
          * Fire events and invoke the callbacks if there are any registered.
          * @param event the fired event name
          * @param milliseconds the milliseconds at the counting time at which the event has been fired
          */
-        this.fireNotificationEvent = function (event, milliseconds) {
+        function fireNotificationEvent(event, milliseconds) {
             for (var i in notifyAtEventArray) {
                 if(notifyAtEventArray[i].event === event) {
                     notifyAtEventArray[i].callback(that.countreeReference,milliseconds);
                 }
             }
-        };
+        }
+
+
+        this.addNotifier = addNotifier;
+        this.resetNotifier = resetNotifier;
+        this.notifyIfNecessary = notifyIfNecessary;
+        this.fireNotificationEvent = fireNotificationEvent;
     }
 
     /**
@@ -364,7 +355,6 @@
      * @constructor
      */
     function TimeObject() {
-
         this.milliseconds = 0;
         this.seconds = 0;
         this.minutes = 0;
@@ -375,7 +365,7 @@
          * Update the time object by recalculating its properties out of the provided milliseconds.
          * @param milliseconds
          */
-        this.update = function (milliseconds) {
+        function update (milliseconds) {
             if (milliseconds > 0) {
                 var count = milliseconds;
                 this.milliseconds = parseInt(milliseconds.toString().substr(-3), 10);
@@ -390,27 +380,35 @@
             }
 
             return this;
-        };
+        }
 
-        this.getMillisecondsAsTripleDigitString = function () {
+        function getMillisecondsAsTripleDigitString() {
             return fillLeftZero(this.milliseconds, 3);
-        };
+        }
 
-        this.getSecondsAsDoubleDigitString = function () {
+        function getSecondsAsDoubleDigitString() {
             return fillLeftZero(this.seconds, 2);
-        };
+        }
 
-        this.getMinutesAsDoubleDigitString = function () {
+        function getMinutesAsDoubleDigitString() {
             return fillLeftZero(this.minutes, 2);
-        };
+        }
 
-        this.getHoursAsDoubleDigitString = function () {
+        function getHoursAsDoubleDigitString() {
             return fillLeftZero(this.hours, 2);
-        };
+        }
 
-        this.toString = function () {
+        function toString() {
             return this.days + " days,  " + this.getHoursAsDoubleDigitString() + ":" + this.getMinutesAsDoubleDigitString() + ":" + this.getSecondsAsDoubleDigitString() + ":" + this.getMillisecondsAsTripleDigitString();
-        };
+        }
+
+
+        this.update = update;
+        this.getMillisecondsAsTripleDigitString = getMillisecondsAsTripleDigitString;
+        this.getSecondsAsDoubleDigitString = getSecondsAsDoubleDigitString;
+        this.getMinutesAsDoubleDigitString = getMinutesAsDoubleDigitString;
+        this.getHoursAsDoubleDigitString = getHoursAsDoubleDigitString;
+        this.toString = toString;
     }
 
 
@@ -445,6 +443,7 @@
             ((object.hours || 0) * 36e5) + // 1000 * 60 * 60
             ((object.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
     }
+
 
     /************************************
      Exports
