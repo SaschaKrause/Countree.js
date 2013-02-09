@@ -1,4 +1,4 @@
-/*! Countree - v0.0.1 - 2013-02-07
+/*! Countree - v0.0.1 - 2013-02-09
 * https://github.com/SaschaKrause/Countree
 * Copyright (c) 2013 Sascha Krause; Licensed MIT */
 
@@ -187,6 +187,7 @@
             that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
         }
 
+
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
@@ -223,6 +224,7 @@
         function getMillisecondsLeft() {
           return overallMillisecondsLeft;
         }
+
 
         this.update = update;
         this.getAsTimeObject = getAsTimeObject;

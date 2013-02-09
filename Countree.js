@@ -191,6 +191,7 @@
             that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
         }
 
+
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
@@ -227,6 +228,7 @@
         function getMillisecondsLeft() {
           return overallMillisecondsLeft;
         }
+
 
         this.update = update;
         this.getAsTimeObject = getAsTimeObject;
