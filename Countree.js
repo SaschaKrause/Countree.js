@@ -88,12 +88,11 @@
             var timeToAddWhenResumed = resumed ? millisecondsForContinuePoint : 0;
 
             var calculateMilliseconds = function () {
-                // when counting down
-                if (that.options.direction === COUNT_DIRECTION.DOWN) {
+                if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                     millisecondsForContinuePoint = totalMillisecondsToGo - (new Date().getTime() - countStartDate.getTime());
                 }
                 //when counting up
-                else if (that.options.direction === COUNT_DIRECTION.UP) {
+                else if (countDirectionIs(COUNT_DIRECTION.UP)) {
                     millisecondsForContinuePoint = (new Date().getTime() + timeToAddWhenResumed) - countStartDate.getTime();
                 }
 
@@ -109,17 +108,31 @@
         }
 
         /**
+         * @private
+         */
+        function countDirectionIs(countDirection) {
+            validateCountDirection(countDirection);
+            return !!(that.options.direction === countDirection);
+        }
+
+        /**
+         * @private
+         */
+        function validateCountDirection() {
+            return; // TODO implement
+        }
+
+        /**
          * Before the interval starts counting, the result should be forwarded to the callback with its initial value
          * @param totalMillisecondsToGo
          * @param callback
          */
         function updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback) {
-            // when counting down
-            if (that.options.direction === COUNT_DIRECTION.DOWN) {
+            if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                 that.countResult.update(totalMillisecondsToGo);
             }
             //when counting up
-            else if (that.options.direction === COUNT_DIRECTION.UP) {
+            else if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 that.countResult.update(0);
             }
 
@@ -128,13 +141,13 @@
 
 
         function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
-            if (that.options.direction === COUNT_DIRECTION.UP) {
+            if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
                     that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
-            else if (that.options.direction === COUNT_DIRECTION.DOWN) {
+            else if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                 if (millisecondsProceeded <= 0) {
                     that.countResult.update(0);
 //                callback(that.countResult);
@@ -150,7 +163,7 @@
 
 
         function start(callback) {
-            var millisecondsAtStart = that.options.direction === COUNT_DIRECTION.DOWN ? getTotalMillisecondsFromObject(that.options) : 0;
+            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromObject(that.options) : 0;
 
             //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
             intervalCallbackRef = callback;
