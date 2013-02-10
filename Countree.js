@@ -406,17 +406,12 @@
             return fillLeftZero(this.hours, 2);
         }
 
-        function toString() {
-            return this.days + " days,  " + this.getHoursAsDoubleDigitString() + ":" + this.getMinutesAsDoubleDigitString() + ":" + this.getSecondsAsDoubleDigitString() + ":" + this.getMillisecondsAsTripleDigitString();
-        }
-
 
         this.update = update;
         this.getMillisecondsAsTripleDigitString = getMillisecondsAsTripleDigitString;
         this.getSecondsAsDoubleDigitString = getSecondsAsDoubleDigitString;
         this.getMinutesAsDoubleDigitString = getMinutesAsDoubleDigitString;
         this.getHoursAsDoubleDigitString = getHoursAsDoubleDigitString;
-        this.toString = toString;
     }
 
 

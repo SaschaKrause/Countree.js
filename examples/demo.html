@@ -44,13 +44,14 @@
         };
 
         function onCountInterval(countResult) {
+            var time = countResult.getAsTimeObject();
+            var formattedTime = time.days + " days,  "
+                    + time.getHoursAsDoubleDigitString() + ":" + time.getMinutesAsDoubleDigitString()
+                    + ":" + time.getSecondsAsDoubleDigitString() + ":" + time.getMillisecondsAsTripleDigitString();
 
-
-
-
-
-
-            window.document.getElementById('counter').innerHTML = countResult.getAsTimeObject().toString();
+            window.document.getElementById('counter').innerHTML = "moo"
+              + '<br />'
+              + formattedTime;
         }
 
 
