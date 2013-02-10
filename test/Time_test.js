@@ -21,17 +21,28 @@ var Countree = require('../Countree.js');
  test.ifError(value)
  */
 
-exports['Time'] = {
-    'Time(0) creates zeros at each digit': function (test) {
-        test.expect(1);
-        test.equal(false, false, 'message');
+exports['TimeMeasurement'] = {
+    'TimeMeasurement(0) creates zeros for each digit': function (test) {
+        var time = new Countree.TimeMeasurement(0);
+
+        test.expect(5);
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.MILLISECONDS), 0, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.SECONDS), 0, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.MINUTES), 0, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.HOURS), 0, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.DAYS), 0, 'Retained digit is incorrect.');
         test.done();
     },
-    '...': function (test) {
+    'TimeMeasurement(446582010) creates correct digits for each digit': function (test) {
+        var time = new Countree.TimeMeasurement(446582010);
 
-        test.expect(1);
-        test.notEqual(true, false, 'should be invalid');
-
+        test.expect(5);
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.MILLISECONDS), 10, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.SECONDS), 2, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.MINUTES), 3, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.HOURS), 4, 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.DAYS), 5, 'Retained digit is incorrect.');
         test.done();
     }
 };
+
