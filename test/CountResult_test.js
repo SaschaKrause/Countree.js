@@ -21,52 +21,58 @@ var Countree = require('../Countree.js');
  test.ifError(value)
  */
 
+function createCountResultUpdatedToMilliseconds(milliseconds) {
+    var countResult = new Countree.CountResult();
+    countResult.update(milliseconds);
+    return countResult;
+}
+
 exports['CountResult'] = {
-    setUp: function (done) {
-
-        // setup
-        this.countResult = new Countree.CountResult();
-        this.countResult.update(446582010);
+    /*setUp: function (done) {
         done();
-    },
+    },*/
     'milliseconds to timeObject converting: valid': function (test) {
-        test.expect(6);
+        var countResult = createCountResultUpdatedToMilliseconds(446582010);
 
-        test.equal(this.countResult.getMillisecondsLeft(), 446582010);
-        test.equal(this.countResult.getAsTimeObject().milliseconds, 10);
-        test.equal(this.countResult.getAsTimeObject().seconds, 2);
-        test.equal(this.countResult.getAsTimeObject().minutes, 3);
-        test.equal(this.countResult.getAsTimeObject().hours, 4);
-        test.equal(this.countResult.getAsTimeObject().days, 5);
+        test.expect(6);
+        test.equal(countResult.getMillisecondsLeft(), 446582010);
+        test.equal(countResult.getAsTimeObject().milliseconds, 10);
+        test.equal(countResult.getAsTimeObject().seconds, 2);
+        test.equal(countResult.getAsTimeObject().minutes, 3);
+        test.equal(countResult.getAsTimeObject().hours, 4);
+        test.equal(countResult.getAsTimeObject().days, 5);
         test.done();
     },
     'milliseconds to timeObject converting: invalid': function (test) {
-        test.expect(6);
+        var countResult = createCountResultUpdatedToMilliseconds(446582010);
 
-        test.notEqual(this.countResult.overallMillisecondsLeft, 446582011, 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().milliseconds, 11, 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().seconds, 21, 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().minutes, 31, 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().hours, 41, 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().days, 51, 'should be invalid');
+        test.expect(6);
+        test.notEqual(countResult.overallMillisecondsLeft, 446582011, 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().milliseconds, 11, 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().seconds, 21, 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().minutes, 31, 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().hours, 41, 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().days, 51, 'should be invalid');
         test.done();
     },
     'milliseconds to doubleDigit timeObject strings: valid': function (test) {
-        test.expect(4);
+        var countResult = createCountResultUpdatedToMilliseconds(446582010);
 
-        test.equal(this.countResult.getAsTimeObject().getMillisecondsAsTripleDigitString(), '010');
-        test.equal(this.countResult.getAsTimeObject().getSecondsAsDoubleDigitString(), '02');
-        test.equal(this.countResult.getAsTimeObject().getMinutesAsDoubleDigitString(), '03');
-        test.equal(this.countResult.getAsTimeObject().getHoursAsDoubleDigitString(), '04');
+        test.expect(4);
+        test.equal(countResult.getAsTimeObject().getMillisecondsAsTripleDigitString(), '010');
+        test.equal(countResult.getAsTimeObject().getSecondsAsDoubleDigitString(), '02');
+        test.equal(countResult.getAsTimeObject().getMinutesAsDoubleDigitString(), '03');
+        test.equal(countResult.getAsTimeObject().getHoursAsDoubleDigitString(), '04');
         test.done();
     },
     'milliseconds to doubleDigit timeObject strings: invalid': function (test) {
-        test.expect(4);
+        var countResult = createCountResultUpdatedToMilliseconds(446582010);
 
-        test.notEqual(this.countResult.getAsTimeObject().getMillisecondsAsTripleDigitString(), '011', 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().getSecondsAsDoubleDigitString(), '2', 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().getMinutesAsDoubleDigitString(), '04', 'should be invalid');
-        test.notEqual(this.countResult.getAsTimeObject().getHoursAsDoubleDigitString(), '5', 'should be invalid');
+        test.expect(4);
+        test.notEqual(countResult.getAsTimeObject().getMillisecondsAsTripleDigitString(), '011', 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().getSecondsAsDoubleDigitString(), '2', 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().getMinutesAsDoubleDigitString(), '04', 'should be invalid');
+        test.notEqual(countResult.getAsTimeObject().getHoursAsDoubleDigitString(), '5', 'should be invalid');
         test.done();
     }
 };
