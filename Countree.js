@@ -110,15 +110,7 @@
          * @private
          */
         function countDirectionIs(countDirection) {
-            validateCountDirection(countDirection);
             return that.options.direction === countDirection;
-        }
-
-        /**
-         * @private
-         */
-        function validateCountDirection() {
-            return; // TODO implement
         }
 
         /**
