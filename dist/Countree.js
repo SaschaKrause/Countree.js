@@ -1,4 +1,4 @@
-/*! Countree - v0.0.1 - 2013-02-07
+/*! Countree - v0.0.1 - 2013-02-10
 * https://github.com/SaschaKrause/Countree
 * Copyright (c) 2013 Sascha Krause; Licensed MIT */
 
@@ -14,6 +14,11 @@
 
 (function (exports) {
 
+    var COUNT_DIRECTION = {
+        DOWN: 'down',
+        UP: 'up'
+    };
+
     /**
      *
      * @param configOptions
@@ -22,11 +27,6 @@
     function Countree(configOptions) {
 
         var that = this;
-
-        var COUNT_DIRECTION = {
-            DOWN: 'down',
-            UP: 'up'
-        };
 
         /**
          * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending
@@ -84,12 +84,10 @@
             var timeToAddWhenResumed = resumed ? millisecondsForContinuePoint : 0;
 
             var calculateMilliseconds = function () {
-                // when counting down
-                if (that.options.direction === COUNT_DIRECTION.DOWN) {
+                if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                     millisecondsForContinuePoint = totalMillisecondsToGo - (new Date().getTime() - countStartDate.getTime());
                 }
-                //when counting up
-                else if (that.options.direction === COUNT_DIRECTION.UP) {
+                else if (countDirectionIs(COUNT_DIRECTION.UP)) {
                     millisecondsForContinuePoint = (new Date().getTime() + timeToAddWhenResumed) - countStartDate.getTime();
                 }
 
@@ -105,17 +103,31 @@
         }
 
         /**
+         * @private
+         */
+        function countDirectionIs(countDirection) {
+            validateCountDirection(countDirection);
+            return that.options.direction === countDirection;
+        }
+
+        /**
+         * @private
+         */
+        function validateCountDirection() {
+            return; // TODO implement
+        }
+
+        /**
          * Before the interval starts counting, the result should be forwarded to the callback with its initial value
          * @param totalMillisecondsToGo
          * @param callback
          */
         function updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback) {
-            // when counting down
-            if (that.options.direction === COUNT_DIRECTION.DOWN) {
+            if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                 that.countResult.update(totalMillisecondsToGo);
             }
             //when counting up
-            else if (that.options.direction === COUNT_DIRECTION.UP) {
+            else if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 that.countResult.update(0);
             }
 
@@ -124,13 +136,13 @@
 
 
         function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
-            if (that.options.direction === COUNT_DIRECTION.UP) {
+            if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
                     that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
-            else if (that.options.direction === COUNT_DIRECTION.DOWN) {
+            else if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                 if (millisecondsProceeded <= 0) {
                     that.countResult.update(0);
 //                callback(that.countResult);
@@ -146,7 +158,7 @@
 
 
         function start(callback) {
-            var millisecondsAtStart = that.options.direction === COUNT_DIRECTION.DOWN ? getTotalMillisecondsFromObject(that.options) : 0;
+            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromObject(that.options) : 0;
 
             //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
             intervalCallbackRef = callback;
@@ -187,6 +199,7 @@
             that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
         }
 
+
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
@@ -223,6 +236,7 @@
         function getMillisecondsLeft() {
           return overallMillisecondsLeft;
         }
+
 
         this.update = update;
         this.getAsTimeObject = getAsTimeObject;
@@ -299,22 +313,22 @@
             for (var i = 0; i < notifyAtTimeArray.length; ++i) {
                 notifyTmp = notifyAtTimeArray[i];
                 needToNotifyWhenCountingDownBeforeEnd = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "down" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.DOWN &&
                     notifyTmp.when === WHEN.BEFORE_END &&
                     notifyTmp.millisecondsToNotify >= milliseconds);
 
                 needToNotifyWhenCountingDownAfterStart = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "down" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.DOWN &&
                     notifyTmp.when === WHEN.AFTER_START &&
                     that.millisecondsStartingPoint - notifyTmp.millisecondsToNotify >= milliseconds);
 
                 needToNotifyWhenCountingUpBeforeEnd = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "up" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.UP &&
                     notifyTmp.when === WHEN.BEFORE_END &&
                     that.millisecondsStartingPoint - notifyTmp.millisecondsToNotify <= milliseconds);
 
                 needToNotifyWhenCountingUpAfterStart = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "up" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.UP &&
                     notifyTmp.when === WHEN.AFTER_START &&
                     notifyTmp.millisecondsToNotify <= milliseconds);
 
