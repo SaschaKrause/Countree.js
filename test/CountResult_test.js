@@ -47,7 +47,7 @@ exports['CountResult'] = {
         var countResult = createCountResultUpdatedToMilliseconds(446582010);
 
         test.expect(6);
-        test.notEqual(countResult.overallMillisecondsLeft, 446582011, 'should be invalid');
+        test.notEqual(countResult.getMillisecondsLeft(), 446582011, 'should be invalid');
         test.notEqual(countResult.getAsTimeObject().milliseconds, 11, 'should be invalid');
         test.notEqual(countResult.getAsTimeObject().seconds, 21, 'should be invalid');
         test.notEqual(countResult.getAsTimeObject().minutes, 31, 'should be invalid');
