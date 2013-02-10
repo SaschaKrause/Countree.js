@@ -18,6 +18,11 @@
 
 (function (exports) {
 
+    var COUNT_DIRECTION = {
+        DOWN: 'down',
+        UP: 'up'
+    };
+
     /**
      *
      * @param configOptions
@@ -26,11 +31,6 @@
     function Countree(configOptions) {
 
         var that = this;
-
-        var COUNT_DIRECTION = {
-            DOWN: 'down',
-            UP: 'up'
-        };
 
         /**
          * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending
@@ -91,7 +91,6 @@
                 if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                     millisecondsForContinuePoint = totalMillisecondsToGo - (new Date().getTime() - countStartDate.getTime());
                 }
-                //when counting up
                 else if (countDirectionIs(COUNT_DIRECTION.UP)) {
                     millisecondsForContinuePoint = (new Date().getTime() + timeToAddWhenResumed) - countStartDate.getTime();
                 }
@@ -112,7 +111,7 @@
          */
         function countDirectionIs(countDirection) {
             validateCountDirection(countDirection);
-            return !!(that.options.direction === countDirection);
+            return that.options.direction === countDirection;
         }
 
         /**
@@ -318,22 +317,22 @@
             for (var i = 0; i < notifyAtTimeArray.length; ++i) {
                 notifyTmp = notifyAtTimeArray[i];
                 needToNotifyWhenCountingDownBeforeEnd = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "down" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.DOWN &&
                     notifyTmp.when === WHEN.BEFORE_END &&
                     notifyTmp.millisecondsToNotify >= milliseconds);
 
                 needToNotifyWhenCountingDownAfterStart = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "down" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.DOWN &&
                     notifyTmp.when === WHEN.AFTER_START &&
                     that.millisecondsStartingPoint - notifyTmp.millisecondsToNotify >= milliseconds);
 
                 needToNotifyWhenCountingUpBeforeEnd = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "up" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.UP &&
                     notifyTmp.when === WHEN.BEFORE_END &&
                     that.millisecondsStartingPoint - notifyTmp.millisecondsToNotify <= milliseconds);
 
                 needToNotifyWhenCountingUpAfterStart = (!notifyTmp.alreadyFired &&
-                    notifyTmp.countingDirection === "up" &&
+                    notifyTmp.countingDirection === COUNT_DIRECTION.UP &&
                     notifyTmp.when === WHEN.AFTER_START &&
                     notifyTmp.millisecondsToNotify <= milliseconds);
 
