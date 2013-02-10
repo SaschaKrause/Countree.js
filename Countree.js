@@ -424,7 +424,7 @@
     }
 
     /**
-     * A time measurement with "millisecond precicsion"
+     * A time measurement with "millisecond precision".
      *
      * @param milliseconds a non-zero integer representing the passed time, measured in milliseconds
      * @constructor
@@ -463,6 +463,7 @@
         function getDigitForTimeUnitLeftFilled(timeUnit, digitsToBeFilled) {
             return fillLeftZero(getDigitForTimeUnit(timeUnit), digitsToBeFilled);
         }
+
 
         this.getDigitForTimeUnit = getDigitForTimeUnit;
         this.getDigitForTimeUnitLeftFilled = getDigitForTimeUnitLeftFilled;
