@@ -1,4 +1,4 @@
-/*! Countree - v0.0.1 - 2013-02-10
+/*! Countree - v0.0.1 - 2013-02-11
 * https://github.com/SaschaKrause/Countree
 * Copyright (c) 2013 Sascha Krause; Licensed MIT */
 
@@ -9,6 +9,7 @@
 // TODO: [FEATURE]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
 // TODO: [FEATURE]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
 // TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
+// TODO: [BUG]      Error handling strategy (and convenience methods!) for public methods
 // TODO: [TEST]     add some Jasmine tests
 // TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
 
@@ -17,6 +18,14 @@
     var COUNT_DIRECTION = {
         DOWN: 'down',
         UP: 'up'
+    };
+
+    var TIME_UNIT =  {
+        MILLISECONDS: 'ms',
+        SECONDS: 's',
+        MINUTES: 'm',
+        HOURS: 'h',
+        DAYS: 'd'
     };
 
     /**
@@ -106,15 +115,7 @@
          * @private
          */
         function countDirectionIs(countDirection) {
-            validateCountDirection(countDirection);
             return that.options.direction === countDirection;
-        }
-
-        /**
-         * @private
-         */
-        function validateCountDirection() {
-            return; // TODO implement
         }
 
         /**
@@ -410,18 +411,59 @@
             return fillLeftZero(this.hours, 2);
         }
 
-        function toString() {
-            return this.days + " days,  " + this.getHoursAsDoubleDigitString() + ":" + this.getMinutesAsDoubleDigitString() + ":" + this.getSecondsAsDoubleDigitString() + ":" + this.getMillisecondsAsTripleDigitString();
-        }
-
 
         this.update = update;
         this.getMillisecondsAsTripleDigitString = getMillisecondsAsTripleDigitString;
         this.getSecondsAsDoubleDigitString = getSecondsAsDoubleDigitString;
         this.getMinutesAsDoubleDigitString = getMinutesAsDoubleDigitString;
         this.getHoursAsDoubleDigitString = getHoursAsDoubleDigitString;
-        this.toString = toString;
     }
+
+    /**
+     * A time measurement with "millisecond precicsion"
+     *
+     * @param milliseconds a non-zero integer representing the passed time, measured in milliseconds
+     * @constructor
+     */
+    function TimeMeasurement(milliseconds) {
+        /**
+         * Extracts the "digit of the measured time": For instance, if 6033 milliseconds
+         * passed, '6' would be the return value for TIME_UNIT.SECONDS.
+         *
+         * @param timeUnit one of TIME_UNIT's value to convert the measured time to
+         * @return digit of the TIME_UNIT of the the measured time
+         */
+        function getDigitForTimeUnit(timeUnit) {
+            if (TIME_UNIT.MILLISECONDS === timeUnit) {
+                return milliseconds % 1000;
+            } else if (TIME_UNIT.SECONDS === timeUnit) {
+                return Math.floor(milliseconds / 1000) % 60;
+            } else if (TIME_UNIT.MINUTES === timeUnit) {
+                return Math.floor(milliseconds / 1000 / 60) % 60;
+            } else if (TIME_UNIT.HOURS === timeUnit) {
+                return Math.floor(milliseconds / 1000 / 60 / 60) % 24;
+            } else if (TIME_UNIT.DAYS === timeUnit) {
+                return Math.floor(milliseconds / 1000 / 60 / 60 / 24);
+            }
+            return 0;
+        }
+
+        /**
+         * Works as 'getDigitForTimeUnit()' but converts result to String and fills
+         * leading digits with '0's, if the resulting number is "to short".
+         *
+         * @param timeUnit one of TIME_UNIT's value to convert the measured time to
+         * @param digitsToBeFilled number of leading digits that will be filled with '0', if the resulting number is "too short".
+         * @return digit of the TIME_UNIT of the the measured time
+         */
+        function getDigitForTimeUnitLeftFilled(timeUnit, digitsToBeFilled) {
+            return fillLeftZero(getDigitForTimeUnit(timeUnit), digitsToBeFilled);
+        }
+
+        this.getDigitForTimeUnit = getDigitForTimeUnit;
+        this.getDigitForTimeUnitLeftFilled = getDigitForTimeUnitLeftFilled;
+    }
+
 
 
     /************************************
@@ -464,5 +506,7 @@
     exports.Countree = Countree;
     exports.CountResult = CountResult;
     exports.TimeObject = TimeObject;
+    exports.TimeMeasurement = TimeMeasurement;
+    exports.TIME_UNIT = TIME_UNIT;
 
 }(typeof exports === 'object' && exports || window));
