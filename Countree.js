@@ -435,7 +435,7 @@
          * passed, '6' would be the return value for TIME_UNIT.SECONDS.
          *
          * @param timeUnit one of TIME_UNIT's value to convert the measured time to
-         * @return TIME_UNIT's digit of the measured time ()
+         * @return digit of the TIME_UNIT of the the measured time
          */
         function getDigitForTimeUnit(timeUnit) {
             if (TIME_UNIT.MILLISECONDS === timeUnit) {
@@ -452,7 +452,20 @@
             return 0;
         }
 
+        /**
+         * Works as 'getDigitForTimeUnit()' but converts result to String and fills
+         * leading digits with '0's, if the resulting number is "to short".
+         *
+         * @param timeUnit one of TIME_UNIT's value to convert the measured time to
+         * @param digitsToBeFilled number of leading digits that will be filled with '0', if the resulting number is "too short".
+         * @return digit of the TIME_UNIT of the the measured time
+         */
+        function getDigitForTimeUnitLeftFilled(timeUnit, digitsToBeFilled) {
+            return fillLeftZero(getDigitForTimeUnit(timeUnit), digitsToBeFilled);
+        }
+
         this.getDigitForTimeUnit = getDigitForTimeUnit;
+        this.getDigitForTimeUnitLeftFilled = getDigitForTimeUnitLeftFilled;
     }
 
 

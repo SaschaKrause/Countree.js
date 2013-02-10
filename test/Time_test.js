@@ -43,6 +43,23 @@ exports['TimeMeasurement'] = {
         test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.HOURS), 4, 'Retained digit is incorrect.');
         test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.DAYS), 5, 'Retained digit is incorrect.');
         test.done();
+    },
+    'Fill digits of 0': function (test) {
+        var time = new Countree.TimeMeasurement(0);
+
+        test.expect(1);
+        test.equal(time.getDigitForTimeUnitLeftFilled(Countree.TIME_UNIT.MILLISECONDS, 3), '000', 'Retained digit is incorrect.');
+        test.done();
+    },
+    'Fill digits for 446582010': function (test) {
+        var time = new Countree.TimeMeasurement(446582010);
+
+        test.expect(4);
+        test.equal(time.getDigitForTimeUnitLeftFilled(Countree.TIME_UNIT.MILLISECONDS, 3), '010', 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnitLeftFilled(Countree.TIME_UNIT.SECONDS, 2), '02', 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnitLeftFilled(Countree.TIME_UNIT.MINUTES, 2), '03', 'Retained digit is incorrect.');
+        test.equal(time.getDigitForTimeUnitLeftFilled(Countree.TIME_UNIT.HOURS, 2), '04', 'Retained digit is incorrect.');
+        test.done();
     }
 };
 
