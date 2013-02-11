@@ -21,9 +21,9 @@ var Countree = require('../Countree.js');
  test.ifError(value)
  */
 
-exports['TimeUtil'] = {
+exports['TimeHelper'] = {
     'setUp':function (done) {
-        this.msToDigit = Countree.TIME_UTIL.getDigitFromMsForTimeUnit; // aliasing for better readability
+        this.msToDigit = Countree.TIME_HELPER.getDigitFromMsForTimeUnit; // aliasing for better readability
         this.unitMillis = Countree.TIME_UNIT.MILLISECONDS;
         this.unitSecs = Countree.TIME_UNIT.SECONDS;
         this.unitMins = Countree.TIME_UNIT.MINUTES;

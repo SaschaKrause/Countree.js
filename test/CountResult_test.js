@@ -37,11 +37,11 @@ exports['CountResult'] = {
 
         test.expect(6);
         test.equal(countResult.getMillisecondsLeft(), 446582010);
-        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 10);
-        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 2);
-        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 3);
-        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 4);
-        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 5);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 10);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 2);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 3);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 4);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 5);
         test.done();
     },
     'test for invalid data': function (test) {
@@ -50,11 +50,11 @@ exports['CountResult'] = {
 
         test.expect(6);
         test.notEqual(countResult.getMillisecondsLeft(), 446582011, 'should be invalid');
-        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 11, 'should be invalid');
-        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 21, 'should be invalid');
-        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 31, 'should be invalid');
-        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 41, 'should be invalid');
-        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 51, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 11, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 21, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 31, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 41, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 51, 'should be invalid');
         test.done();
     }
 };

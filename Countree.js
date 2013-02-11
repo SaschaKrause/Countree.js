@@ -34,9 +34,6 @@
         DAYS: 'd'
     };
 
-    /** @constant */
-    var TIME_UTIL = new TimeUtil(); // no lazy loading, since TimeUtil is stateless
-
     /**
      *
      * @param configOptions
@@ -363,9 +360,12 @@
     /**
      * A utility 'class' to extract information from a time value, specified in with milliseconds.
      *
+     * Called 'TimeHelper' - instead of 'TimeUtil' - for better readability. Remember that we're going to
+     * publish TIME_UNIT member at the end of this file!
+     *
      * @constructor
      */
-    function TimeUtil() {
+    function TimeHelper() {
         /**
          * Extracts the "digit of the measured time": For instance, if 6033 milliseconds were
          * passed, '6' would be the return value for TIME_UNIT.SECONDS and '33' the return
@@ -461,6 +461,5 @@
     exports.Countree = Countree;
     exports.CountResult = CountResult;
     exports.TIME_UNIT = TIME_UNIT;
-    exports.TIME_UTIL = TIME_UTIL;
-
+    exports.TIME_HELPER = new TimeHelper(); // no lazy loading, since TimeUtil is stateless
 }(typeof exports === 'object' && exports || window));
