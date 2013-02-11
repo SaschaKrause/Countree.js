@@ -28,33 +28,33 @@ function createCountResultUpdatedToMilliseconds(milliseconds) {
 }
 
 exports['CountResult'] = {
-    /*setUp: function (done) {
+    setUp: function (done) {
         done();
-    },*/
+    },
     'no time passed': function (test) {
         var countResult = createCountResultUpdatedToMilliseconds(446582010);
-        var time = countResult.getPassedTime();
+        var ms = countResult.getMillisecondsLeft();
 
         test.expect(6);
         test.equal(countResult.getMillisecondsLeft(), 446582010);
-        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.MILLISECONDS), 10);
-        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.SECONDS), 2);
-        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.MINUTES), 3);
-        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.HOURS), 4);
-        test.equal(time.getDigitForTimeUnit(Countree.TIME_UNIT.DAYS), 5);
+        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 10);
+        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 2);
+        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 3);
+        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 4);
+        test.equal(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 5);
         test.done();
     },
     'test for invalid data': function (test) {
         var countResult = createCountResultUpdatedToMilliseconds(446582010);
-        var time = countResult.getPassedTime();
+        var ms = countResult.getMillisecondsLeft();
 
         test.expect(6);
         test.notEqual(countResult.getMillisecondsLeft(), 446582011, 'should be invalid');
-        test.notEqual(time.getDigitForTimeUnit(Countree.TIME_UNIT.MILLISECONDS), 11, 'should be invalid');
-        test.notEqual(time.getDigitForTimeUnit(Countree.TIME_UNIT.SECONDS), 21, 'should be invalid');
-        test.notEqual(time.getDigitForTimeUnit(Countree.TIME_UNIT.MINUTES), 31, 'should be invalid');
-        test.notEqual(time.getDigitForTimeUnit(Countree.TIME_UNIT.HOURS), 41, 'should be invalid');
-        test.notEqual(time.getDigitForTimeUnit(Countree.TIME_UNIT.DAYS), 51, 'should be invalid');
+        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 11, 'should be invalid');
+        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 21, 'should be invalid');
+        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 31, 'should be invalid');
+        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 41, 'should be invalid');
+        test.notEqual(Countree.TIME_UTIL.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 51, 'should be invalid');
         test.done();
     }
 };
