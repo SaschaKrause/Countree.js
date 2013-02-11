@@ -34,6 +34,9 @@
         DAYS: 'd'
     };
 
+    /** @constant */
+    var TIME_UTIL = new TimeUtil(); // no lazy loading, since TimeUtil is stateless
+
     /**
      *
      * @param configOptions
@@ -231,21 +234,13 @@
             return overallMillisecondsLeft;
         }
 
-        /**
-         * @return a {@link TimeMeasurement} representing the passed time for this Countree
-         */
-        function getPassedTime() {
-            return new TimeMeasurement(overallMillisecondsLeft);
-        }
-
         function getMillisecondsLeft() {
-          return overallMillisecondsLeft;
+            return overallMillisecondsLeft;
         }
 
 
         this.update = update;
         this.getMillisecondsLeft = getMillisecondsLeft;
-        this.getPassedTime = getPassedTime;
     }
 
     function CountNotifier(countreeRef, millisecondsStartingPoint) {
@@ -366,20 +361,21 @@
     }
 
     /**
-     * A time measurement with "millisecond precision".
+     * A utility 'class' to extract information from a time value, specified in with milliseconds.
      *
-     * @param passedMilliseconds a non-zero integer representing the passed time, measured in passedMilliseconds
      * @constructor
      */
-    function TimeMeasurement(passedMilliseconds) {
+    function TimeUtil() {
         /**
          * Extracts the "digit of the measured time": For instance, if 6033 passedMilliseconds
-         * passed, '6' would be the return value for TIME_UNIT.SECONDS.
+         * passed, '6' would be the return value for TIME_UNIT.SECONDS and '33' the return
+         * value for TIME_UNIT.MILLISECONDS.
          *
+         * @param passedMilliseconds a non-zero integer representing the passed time, measured in passedMilliseconds
          * @param timeUnit one of TIME_UNIT's value to convert the measured time to
          * @return digit of the TIME_UNIT of the the measured time
          */
-        function getDigitForTimeUnit(timeUnit) {
+        function getDigitFromMillisecondsForTimeUnit(passedMilliseconds, timeUnit) {
             if (TIME_UNIT.MILLISECONDS === timeUnit) {
                 return passedMilliseconds % 1000;
             } else if (TIME_UNIT.SECONDS === timeUnit) {
@@ -395,30 +391,32 @@
         }
 
         /**
-         * Works as 'getDigitForTimeUnit()' but converts result to String and fills
+         * Works as 'getDigitFromMillisecondsForTimeUnit()' but converts result to String and fills
          * leading digits with '0's, if the resulting number is "to short".
          *
+         * @param passedMilliseconds a non-zero integer representing the passed time, measured in passedMilliseconds
          * @param timeUnit one of TIME_UNIT's value to convert the measured time to
          * @param digitsToBeFilled number of leading digits that will be filled with '0', if the resulting number is "too short".
          * @return digit of the TIME_UNIT of the the measured time
          */
-        function getDigitForTimeUnitLeftFilled(timeUnit, digitsToBeFilled) {
-            return fillLeftZero(getDigitForTimeUnit(timeUnit), digitsToBeFilled || 2);
+        function getDigitFromMillisecondsForTimeUnitLeftFilled(passedMilliseconds, timeUnit, digitsToBeFilled) {
+            var digit = getDigitFromMillisecondsForTimeUnit(passedMilliseconds, timeUnit);
+            return fillLeftZero(digit, digitsToBeFilled || 2);
         }
 
-        function toString() {
-            var d = getDigitForTimeUnit(TIME_UNIT.DAYS);
-            var h = getDigitForTimeUnit(TIME_UNIT.HOURS);
-            var m = getDigitForTimeUnit(TIME_UNIT.MINUTES);
-            var s = getDigitForTimeUnit(TIME_UNIT.SECONDS);
-            var ms = getDigitForTimeUnit(TIME_UNIT.MILLISECONDS);
+        function millisecondsAsFormattedTime(passedMilliseconds) {
+            var d = getDigitFromMillisecondsForTimeUnit(passedMilliseconds, TIME_UNIT.DAYS);
+            var h = getDigitFromMillisecondsForTimeUnit(passedMilliseconds, TIME_UNIT.HOURS);
+            var m = getDigitFromMillisecondsForTimeUnit(passedMilliseconds, TIME_UNIT.MINUTES);
+            var s = getDigitFromMillisecondsForTimeUnit(passedMilliseconds, TIME_UNIT.SECONDS);
+            var ms = getDigitFromMillisecondsForTimeUnit(passedMilliseconds, TIME_UNIT.MILLISECONDS);
             var pastTimeFormatted = d + "d,  " + h + 'h:' + m + 'm ' + s + 's:' + ms + ' ms';
-            return 'TimeMeasurement['+passedMilliseconds+' ms. passed = ' + pastTimeFormatted + ']';
+            return 'TimeUtil['+passedMilliseconds+' ms. passed = ' + pastTimeFormatted + ']';
         }
 
-        this.getDigitForTimeUnit = getDigitForTimeUnit;
-        this.getDigitForTimeUnitLeftFilled = getDigitForTimeUnitLeftFilled;
-        this.toString = toString;
+        this.getDigitFromMillisecondsForTimeUnit = getDigitFromMillisecondsForTimeUnit;
+        this.getDigitFromMillisecondsForTimeUnitLeftFilled = getDigitFromMillisecondsForTimeUnitLeftFilled;
+        this.millisecondsAsFormattedTime = millisecondsAsFormattedTime;
     }
 
 
@@ -462,7 +460,7 @@
 
     exports.Countree = Countree;
     exports.CountResult = CountResult;
-    exports.TimeMeasurement = TimeMeasurement;
     exports.TIME_UNIT = TIME_UNIT;
+    exports.TIME_UTIL = TIME_UTIL;
 
 }(typeof exports === 'object' && exports || window));
