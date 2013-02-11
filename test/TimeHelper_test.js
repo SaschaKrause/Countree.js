@@ -23,7 +23,7 @@ var Countree = require('../Countree.js');
 
 exports['TimeHelper'] = {
     'setUp':function (done) {
-        this.msToDigit = Countree.TIME_HELPER.getDigitFromMsForTimeUnit; // aliasing for better readability
+        this.msToDigit = Countree.TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled; // aliasing for better readability
         this.unitMillis = Countree.TIME_UNIT.MILLISECONDS;
         this.unitSecs = Countree.TIME_UNIT.SECONDS;
         this.unitMins = Countree.TIME_UNIT.MINUTES;
@@ -31,7 +31,7 @@ exports['TimeHelper'] = {
         this.unitDays = Countree.TIME_UNIT.DAYS;
         done();
     },
-    'TimeUtil(0) creates zeros for each digit':function (test) {
+    'TimeHelper(0) creates zeros for each digit':function (test) {
         var ms = 0;
 
         test.expect(5);
@@ -42,7 +42,7 @@ exports['TimeHelper'] = {
         test.equal(this.msToDigit(ms, this.unitDays), 0, 'Retained digit is incorrect.');
         test.done();
     },
-    'TimeUtil(446582010) creates correct digits for each digit':function (test) {
+    'TimeHelper(446582010) creates correct digits for each digit':function (test) {
         var ms = 446582010;
 
         test.expect(5);
@@ -57,17 +57,17 @@ exports['TimeHelper'] = {
         var ms = 0;
 
         test.expect(1);
-        test.equal(this.msToDigit(ms, this.unitMillis, 3), '000', 'Retained digit is incorrect.');
+        test.ok(this.msToDigit(ms, this.unitMillis, 3) === '000', 'Retained digit is incorrect.');
         test.done();
     },
     'Fill digits for 446582010':function (test) {
         var ms = 446582010;
 
         test.expect(4);
-        test.equal(this.msToDigit(ms, this.unitMillis, 3), '010', 'Retained digit is incorrect.');
-        test.equal(this.msToDigit(ms, this.unitSecs, 2), '02', 'Retained digit is incorrect.');
-        test.equal(this.msToDigit(ms, this.unitMins, 2), '03', 'Retained digit is incorrect.');
-        test.equal(this.msToDigit(ms, this.unitHours, 2), '04', 'Retained digit is incorrect.');
+        test.ok(this.msToDigit(ms, this.unitMillis, 3) === '010', 'Retained digit is incorrect.');
+        test.ok(this.msToDigit(ms, this.unitSecs, 2) === '02', 'Retained digit is incorrect.');
+        test.ok(this.msToDigit(ms, this.unitMins, 2) === '03', 'Retained digit is incorrect.');
+        test.ok(this.msToDigit(ms, this.unitHours, 2) === '04', 'Retained digit is incorrect.');
         test.done();
     }
 };
