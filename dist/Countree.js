@@ -10,16 +10,19 @@
 // TODO: [FEATURE]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
 // TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
 // TODO: [BUG]      Error handling strategy (and convenience methods!) for public methods
+// TODO: ------->>> Add toString() to TimeMeasurement;
 // TODO: [TEST]     add some Jasmine tests
 // TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
 
 (function (exports) {
 
+    /** @constant */
     var COUNT_DIRECTION = {
         DOWN: 'down',
         UP: 'up'
     };
 
+    /** @constant */
     var TIME_UNIT =  {
         MILLISECONDS: 'ms',
         SECONDS: 's',
@@ -234,6 +237,13 @@
             return timeObject_.update(overallMillisecondsLeft);
         }
 
+        /**
+         * @return a {@link TimeMeasurement} representing the passed time for this Countree
+         */
+        function getPassedTime() {
+            return new TimeMeasurement(overallMillisecondsLeft);
+        }
+
         function getMillisecondsLeft() {
           return overallMillisecondsLeft;
         }
@@ -242,6 +252,7 @@
         this.update = update;
         this.getAsTimeObject = getAsTimeObject;
         this.getMillisecondsLeft = getMillisecondsLeft;
+        this.getPassedTime = getPassedTime;
     }
 
     function CountNotifier(countreeRef, millisecondsStartingPoint) {
@@ -420,14 +431,14 @@
     }
 
     /**
-     * A time measurement with "millisecond precicsion"
+     * A time measurement with "millisecond precision".
      *
-     * @param milliseconds a non-zero integer representing the passed time, measured in milliseconds
+     * @param passedMilliseconds a non-zero integer representing the passed time, measured in passedMilliseconds
      * @constructor
      */
-    function TimeMeasurement(milliseconds) {
+    function TimeMeasurement(passedMilliseconds) {
         /**
-         * Extracts the "digit of the measured time": For instance, if 6033 milliseconds
+         * Extracts the "digit of the measured time": For instance, if 6033 passedMilliseconds
          * passed, '6' would be the return value for TIME_UNIT.SECONDS.
          *
          * @param timeUnit one of TIME_UNIT's value to convert the measured time to
@@ -435,15 +446,15 @@
          */
         function getDigitForTimeUnit(timeUnit) {
             if (TIME_UNIT.MILLISECONDS === timeUnit) {
-                return milliseconds % 1000;
+                return passedMilliseconds % 1000;
             } else if (TIME_UNIT.SECONDS === timeUnit) {
-                return Math.floor(milliseconds / 1000) % 60;
+                return Math.floor(passedMilliseconds / 1000) % 60;
             } else if (TIME_UNIT.MINUTES === timeUnit) {
-                return Math.floor(milliseconds / 1000 / 60) % 60;
+                return Math.floor(passedMilliseconds / 1000 / 60) % 60;
             } else if (TIME_UNIT.HOURS === timeUnit) {
-                return Math.floor(milliseconds / 1000 / 60 / 60) % 24;
+                return Math.floor(passedMilliseconds / 1000 / 60 / 60) % 24;
             } else if (TIME_UNIT.DAYS === timeUnit) {
-                return Math.floor(milliseconds / 1000 / 60 / 60 / 24);
+                return Math.floor(passedMilliseconds / 1000 / 60 / 60 / 24);
             }
             return 0;
         }
@@ -459,6 +470,7 @@
         function getDigitForTimeUnitLeftFilled(timeUnit, digitsToBeFilled) {
             return fillLeftZero(getDigitForTimeUnit(timeUnit), digitsToBeFilled);
         }
+
 
         this.getDigitForTimeUnit = getDigitForTimeUnit;
         this.getDigitForTimeUnitLeftFilled = getDigitForTimeUnitLeftFilled;
