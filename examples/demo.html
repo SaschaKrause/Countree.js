@@ -45,21 +45,13 @@
 
         function onCountInterval(countResult) {
             var pTime = countResult.getPassedTime();
-            var d = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.DAYS, 2);
+            var d = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.DAYS, 1);
             var h = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.HOURS, 2);
             var m = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.MINUTES, 2);
             var s = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.SECONDS, 2);
-            var ms = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.MILLISECONDS, 4);
-            var pastTimeFormatted = 'This Countree is up for ' + d + " days,  " + h + ' hours,' + m + ' minutes, ' + s + ' seconds and ' + ms + ' milliseconds.';
-            var time = countResult.getAsTimeObject();
-            var ildTime = time.days + " days,  "
-                    + time.getHoursAsDoubleDigitString() + ":" + time.getMinutesAsDoubleDigitString()
-                    + ":" + time.getSecondsAsDoubleDigitString() + ":" + time.getMillisecondsAsTripleDigitString();
-
-            window.document.getElementById('counter').innerHTML = pastTimeFormatted
-              + '<br />'
-                    + ildTime + '<br />'
-              + 'TimeMeasurement.toString(): ' + pTime;
+            var ms = pTime.getDigitForTimeUnitLeftFilled(TIME_UNIT.MILLISECONDS, 3);
+            var pastTimeFormatted = 'Countree is up for ' + d + " days and  " + h + ' hours,' + m + ' min., ' + s + ' sec. and ' + ms + ' msec.';
+            window.document.getElementById('counter').innerHTML = pastTimeFormatted + '<br />' + pTime;
         }
 
 
