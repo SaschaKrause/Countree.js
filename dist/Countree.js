@@ -8,6 +8,7 @@
 // TODO: [FEATURE]  add AMD-loader ability
 // TODO: [FEATURE]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
 // TODO: [FEATURE]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
+// TODO: [BUG]      'notifyAt' seems to be buggy: when counting down the 'beforeEnd' event won't fire (when counting up, the 'afterStart' seems broken)
 // TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
 // TODO: [BUG]      Error handling strategy (and convenience methods!) for public methods
 // TODO: [TEST]     add some Jasmine tests
@@ -22,7 +23,7 @@
     };
 
     /** @constant */
-    var TIME_UNIT =  {
+    var TIME_UNIT = {
         MILLISECONDS: 'ms',
         SECONDS: 's',
         MINUTES: 'm',
@@ -183,7 +184,7 @@
         function suspend() {
             // clear the interval as it stops the further counting
             clearIntervalFromCountree();
-            if(that.isCounting){
+            if (that.isCounting) {
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_SUSPEND, millisecondsForContinuePoint);
             }
             that.isCounting = false;
@@ -216,12 +217,14 @@
     function CountResult(countreeRef, millisecondsStartingPoint) {
         var that = this;
         var overallMillisecondsLeft = 0;
+        var formattedTimeTmp = new FormattedTime();
 
         this.countNotifier = new CountNotifier(countreeRef, this.millisecondsStartingPoint);
 
 
         function update(milliseconds) {
             overallMillisecondsLeft = milliseconds;
+            formattedTimeTmp.update(milliseconds);
             //every time the milliseconds are updated, we need to check if there is a notifier that listens to that
             that.countNotifier.notifyIfNecessary(milliseconds);
             return overallMillisecondsLeft;
@@ -231,9 +234,88 @@
             return overallMillisecondsLeft;
         }
 
+        function formattedTime() {
+            return formattedTimeTmp;
+        }
 
         this.update = update;
         this.getMillisecondsLeft = getMillisecondsLeft;
+        this.formattedTime = formattedTime;
+    }
+
+    /**
+     * This is a convenience class that wraps some often used time methods for quick access.
+     * @constructor
+     */
+    function FormattedTime() {
+        var millisecondsToConvert = 0;
+        var timeHelper = new TimeHelper();
+
+        function update(milliseconds) {
+            millisecondsToConvert = milliseconds;
+        }
+
+        /**
+         * Returns the Days out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the days calculated from the provided milliseconds left/to go.
+         */
+        function getDays(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.DAYS, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the hours out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the hours calculated from the provided milliseconds left/to go.
+         */
+        function getHours(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.HOURS, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the minutes out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the minutes calculated from the provided milliseconds left/to go.
+         */
+        function getMinutes(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.MINUTES, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the seconds out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the seconds calculated from the provided milliseconds left/to go.
+         */
+        function getSeconds(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.SECONDS, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the milliSeconds out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the milliSeconds calculated from the provided milliseconds left/to go.
+         */
+        function getMilliSeconds(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.MILLISECONDS, digitsToBeFilled);
+        }
+
+        function toString() {
+            return getDays() + ", " + getHours(2) + ":" + getMinutes(2) + ":" + getSeconds(2) + ":" + getMilliSeconds(3);
+        }
+
+        this.update = update;
+        this.getDays = getDays;
+        this.getHours = getHours;
+        this.getMinutes = getMinutes;
+        this.getSeconds = getSeconds;
+        this.getMilliSeconds = getMilliSeconds;
+        this.toString = toString;
     }
 
     function CountNotifier(countreeRef, millisecondsStartingPoint) {
@@ -369,52 +451,28 @@
          *
          * @param passedMilliseconds a non-zero integer representing the passed time, measured in passedMilliseconds
          * @param timeUnit one of TIME_UNIT's value to convert the measured time to
-         * @return digit of the TIME_UNIT of the the measured time
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting number is "too short".
+         * @return {Number|String} the result of the TIME_UNIT. Its a Number if no <code>digitsToBeFilled<code> is provided, otherwise a String is returned
          */
-        function getDigitFromMsForTimeUnit(passedMilliseconds, timeUnit) {
+        function getDigitFromMsForTimeUnit(passedMilliseconds, timeUnit, digitsToBeFilled) {
+            var result = 0;
             if (TIME_UNIT.MILLISECONDS === timeUnit) {
-                return passedMilliseconds % 1000;
+                result = passedMilliseconds % 1000;
             } else if (TIME_UNIT.SECONDS === timeUnit) {
-                return Math.floor(passedMilliseconds / 1000) % 60;
+                result = Math.floor(passedMilliseconds / 1000) % 60;
             } else if (TIME_UNIT.MINUTES === timeUnit) {
-                return Math.floor(passedMilliseconds / 1000 / 60) % 60;
+                result = Math.floor(passedMilliseconds / 1000 / 60) % 60;
             } else if (TIME_UNIT.HOURS === timeUnit) {
-                return Math.floor(passedMilliseconds / 1000 / 60 / 60) % 24;
+                result = Math.floor(passedMilliseconds / 1000 / 60 / 60) % 24;
             } else if (TIME_UNIT.DAYS === timeUnit) {
-                return Math.floor(passedMilliseconds / 1000 / 60 / 60 / 24);
+                result = Math.floor(passedMilliseconds / 1000 / 60 / 60 / 24);
             }
-            return 0;
-        }
 
-        /**
-         * Works as 'getDigitFromMillisecondsForTimeUnit()' but converts result to String and fills
-         * leading digits with '0's, if the resulting number is "to short".
-         *
-         * @param passedMilliseconds a non-zero integer representing the passed time, measured in passedMilliseconds
-         * @param timeUnit one of TIME_UNIT's value to convert the measured time to
-         * @param digitsToBeFilled number of leading digits that will be filled with '0', if the resulting number is "too short".
-         * @return digit of the TIME_UNIT of the the measured time
-         */
-        function getDigitFromMsForTimeUnitLeftFilled(passedMilliseconds, timeUnit, digitsToBeFilled) {
-            var digit = getDigitFromMsForTimeUnit(passedMilliseconds, timeUnit);
-            return fillLeftZero(digit, digitsToBeFilled || 2);
-        }
-
-        function millisecondsAsFormattedTime(passedMilliseconds) {
-            var d = getDigitFromMsForTimeUnit(passedMilliseconds, TIME_UNIT.DAYS);
-            var h = getDigitFromMsForTimeUnit(passedMilliseconds, TIME_UNIT.HOURS);
-            var m = getDigitFromMsForTimeUnit(passedMilliseconds, TIME_UNIT.MINUTES);
-            var s = getDigitFromMsForTimeUnit(passedMilliseconds, TIME_UNIT.SECONDS);
-            var ms = getDigitFromMsForTimeUnit(passedMilliseconds, TIME_UNIT.MILLISECONDS);
-            var pastTimeFormatted = d + "d,  " + h + 'h:' + m + 'm ' + s + 's:' + ms + ' ms';
-            return 'TimeUtil['+passedMilliseconds+' ms. passed = ' + pastTimeFormatted + ']';
+            return digitsToBeFilled === undefined ? result : fillLeftZero(result, digitsToBeFilled);
         }
 
         this.getDigitFromMsForTimeUnit = getDigitFromMsForTimeUnit;
-        this.getDigitFromMsForTimeUnitLeftFilled = getDigitFromMsForTimeUnitLeftFilled;
-        this.millisecondsAsFormattedTime = millisecondsAsFormattedTime;
     }
-
 
 
     /************************************
@@ -456,6 +514,4 @@
 
     exports.Countree = Countree;
     exports.CountResult = CountResult;
-    exports.TIME_UNIT = TIME_UNIT;
-    exports.TIME_HELPER = new TimeHelper(); // no lazy loading, since TimeUtil is stateless
 }(typeof exports === 'object' && exports || window));

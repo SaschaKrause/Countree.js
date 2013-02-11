@@ -45,23 +45,22 @@
 
         function onCountInterval(countResult) {
             var msPassed = countResult.getMillisecondsLeft();
-            var d = TIME_HELPER.getDigitFromMsForTimeUnit(msPassed, TIME_UNIT.DAYS, 1);
-            var h = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.HOURS, 2);
-            var m = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.MINUTES, 2);
-            var s = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.SECONDS, 2);
-            var ms = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.MILLISECONDS, 3);
-            var pastTimeFormatted = 'Countree is up for ' + d + " days and  " + h + ' hours,' + m + ' min., ' + s + ' sec. and ' + ms + ' msec.';
-            window.document.getElementById('counter').innerHTML = pastTimeFormatted
-                    + '<br />'
-                    + 'TimeUtil.toString(): ' + TIME_HELPER.millisecondsAsFormattedTime(msPassed);
+            var d = countResult.formattedTime().getDays(1);
+            var h = countResult.formattedTime().getHours(2);
+            var m = countResult.formattedTime().getMinutes(2);
+            var s = countResult.formattedTime().getSeconds(2);
+            var ms = countResult.formattedTime().getMilliSeconds(3);
+
+            window.document.getElementById('counter').innerHTML = d +", "+ h + ":" + m + ":" + s + ":"+ms;
+
         }
 
 
-        counter.notifyAt({seconds: 10, when: 'beforeEnd'}, function (countreeReference, milliseconds) {
+        counter.notifyAt({seconds: 5, when: 'beforeEnd'}, function (countreeReference, milliseconds) {
             console.log("just 10 seconds left @", countreeReference.options.name, "", milliseconds);
         });
 
-        counter.notifyAt({seconds: 10, when: 'afterStart'}, function (countreeReference, milliseconds) {
+        counter.notifyAt({seconds: 5, when: 'afterStart'}, function (countreeReference, milliseconds) {
             console.log("the first 10 seconds are already over @", countreeReference.options.name, "", milliseconds);
         });
 
