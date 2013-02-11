@@ -28,51 +28,33 @@ function createCountResultUpdatedToMilliseconds(milliseconds) {
 }
 
 exports['CountResult'] = {
-    /*setUp: function (done) {
+    setUp: function (done) {
         done();
-    },*/
-    'milliseconds to timeObject converting: valid': function (test) {
+    },
+    'no time passed': function (test) {
         var countResult = createCountResultUpdatedToMilliseconds(446582010);
+        var ms = countResult.getMillisecondsLeft();
 
         test.expect(6);
         test.equal(countResult.getMillisecondsLeft(), 446582010);
-        test.equal(countResult.getAsTimeObject().milliseconds, 10);
-        test.equal(countResult.getAsTimeObject().seconds, 2);
-        test.equal(countResult.getAsTimeObject().minutes, 3);
-        test.equal(countResult.getAsTimeObject().hours, 4);
-        test.equal(countResult.getAsTimeObject().days, 5);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 10);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 2);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 3);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 4);
+        test.equal(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 5);
         test.done();
     },
-    'milliseconds to timeObject converting: invalid': function (test) {
+    'test for invalid data': function (test) {
         var countResult = createCountResultUpdatedToMilliseconds(446582010);
+        var ms = countResult.getMillisecondsLeft();
 
         test.expect(6);
         test.notEqual(countResult.getMillisecondsLeft(), 446582011, 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().milliseconds, 11, 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().seconds, 21, 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().minutes, 31, 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().hours, 41, 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().days, 51, 'should be invalid');
-        test.done();
-    },
-    'milliseconds to doubleDigit timeObject strings: valid': function (test) {
-        var countResult = createCountResultUpdatedToMilliseconds(446582010);
-
-        test.expect(4);
-        test.equal(countResult.getAsTimeObject().getMillisecondsAsTripleDigitString(), '010');
-        test.equal(countResult.getAsTimeObject().getSecondsAsDoubleDigitString(), '02');
-        test.equal(countResult.getAsTimeObject().getMinutesAsDoubleDigitString(), '03');
-        test.equal(countResult.getAsTimeObject().getHoursAsDoubleDigitString(), '04');
-        test.done();
-    },
-    'milliseconds to doubleDigit timeObject strings: invalid': function (test) {
-        var countResult = createCountResultUpdatedToMilliseconds(446582010);
-
-        test.expect(4);
-        test.notEqual(countResult.getAsTimeObject().getMillisecondsAsTripleDigitString(), '011', 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().getSecondsAsDoubleDigitString(), '2', 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().getMinutesAsDoubleDigitString(), '04', 'should be invalid');
-        test.notEqual(countResult.getAsTimeObject().getHoursAsDoubleDigitString(), '5', 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MILLISECONDS), 11, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.SECONDS), 21, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.MINUTES), 31, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.HOURS), 41, 'should be invalid');
+        test.notEqual(Countree.TIME_HELPER.getDigitFromMsForTimeUnit(ms, Countree.TIME_UNIT.DAYS), 51, 'should be invalid');
         test.done();
     }
 };

@@ -44,14 +44,16 @@
         };
 
         function onCountInterval(countResult) {
-            var time = countResult.getAsTimeObject();
-            var formattedTime = time.days + " days,  "
-                    + time.getHoursAsDoubleDigitString() + ":" + time.getMinutesAsDoubleDigitString()
-                    + ":" + time.getSecondsAsDoubleDigitString() + ":" + time.getMillisecondsAsTripleDigitString();
-
-            window.document.getElementById('counter').innerHTML = "moo"
-              + '<br />'
-              + formattedTime;
+            var msPassed = countResult.getMillisecondsLeft();
+            var d = TIME_HELPER.getDigitFromMsForTimeUnit(msPassed, TIME_UNIT.DAYS, 1);
+            var h = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.HOURS, 2);
+            var m = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.MINUTES, 2);
+            var s = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.SECONDS, 2);
+            var ms = TIME_HELPER.getDigitFromMsForTimeUnitLeftFilled(msPassed, TIME_UNIT.MILLISECONDS, 3);
+            var pastTimeFormatted = 'Countree is up for ' + d + " days and  " + h + ' hours,' + m + ' min., ' + s + ' sec. and ' + ms + ' msec.';
+            window.document.getElementById('counter').innerHTML = pastTimeFormatted
+                    + '<br />'
+                    + 'TimeUtil.toString(): ' + TIME_HELPER.millisecondsAsFormattedTime(msPassed);
         }
 
 
