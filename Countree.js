@@ -9,14 +9,13 @@
 // TODO: [FEATURE]  provide the possibility to register some kind of event listener to a countree which is called on custom events (e.g. "5 minutes before counter ends")
 // TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
 // TODO: [FEATURE]  get progress in % (e.g. 13% are already counted down/up)
-// TODO: [FEATURE]  add AMD-loader ability
 // TODO: [FEATURE]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
 // TODO: [FEATURE]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
 // TODO: [BUG]      'notifyAt' seems to be buggy: when counting down the 'beforeEnd' event won't fire (when counting up, the 'afterStart' seems broken)
 // TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
 // TODO: [BUG]      Error handling strategy (and convenience methods!) for public methods
 // TODO: [TEST]     add some Jasmine tests
-// TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.getTimeObject()
+// TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.formattedTime()
 
 (function (exports) {
 
@@ -79,7 +78,7 @@
             direction: COUNT_DIRECTION.UP,
             name: 'untitled'
         };
-        // update/extend the default options with the user config options
+        // update and extend the default options with the user config options
         extendObjectBy(this.options, configOptions);
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
@@ -146,7 +145,6 @@
         function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
             if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
-                    that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
@@ -154,10 +152,11 @@
                 if (millisecondsProceeded <= 0) {
                     that.countResult.update(0);
 //                callback(that.countResult);
-                    that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                     clearIntervalFromCountree();
                 }
             }
+
+            that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
         }
 
         function clearIntervalFromCountree() {
@@ -372,8 +371,8 @@
          * Resets the notifier so that it is able to fire again when needed.
          */
         function resetNotifier() {
-            for (var i = 0; i < notifyAtTimeArray.length; ++i) {
-                notifyAtTimeArray[i].alreadyFired = false;
+            for (var i = 0; i < notifyAtEventArray.length; ++i) {
+                notifyAtEventArray[i].alreadyFired = false;
             }
             for (var k = 0; k < notifyAtTimeArray.length; ++k) {
                 notifyAtTimeArray[k].alreadyFired = false;
@@ -516,6 +515,15 @@
      Exports
      ************************************/
 
-    exports.Countree = Countree;
-    exports.CountResult = CountResult;
+    /*global define:false */
+    if (typeof define === "function" && define.amd) {
+        define([], function () {
+            return Countree;
+        });
+    }
+    else {
+        exports.Countree = Countree;
+        exports.CountResult = CountResult;
+    }
+
 }(typeof exports === 'object' && exports || window));
