@@ -30,17 +30,21 @@
         };
 
         var counter = new Countree(counterOption);
+        console.log("counter state: " + counter.state);
 
         window.restart = function () {
             counter.start(onCountInterval);
+            console.log("counter state: " + counter.state);
         };
 
         window.suspend = function () {
             counter.suspend();
+            console.log("counter state: " + counter.state);
         };
 
         window.resume = function () {
             counter.resume();
+            console.log("counter state: " + counter.state);
         };
 
         function onCountInterval(countResult) {

@@ -34,6 +34,13 @@
         DAYS: 'd'
     };
 
+    var COUNTER_STATUS = {
+        COUNTING: 'counting',
+        SUSPENDED: 'suspended',
+        STOPPED: 'stopped',
+        NOT_STARTED: 'not started'
+    };
+
     /**
      *
      * @param configOptions
@@ -78,6 +85,9 @@
             direction: COUNT_DIRECTION.UP,
             name: 'untitled'
         };
+
+        this.state = COUNTER_STATUS.NOT_STARTED;
+
         // update and extend the default options with the user config options
         extendObjectBy(this.options, configOptions);
 
@@ -181,24 +191,24 @@
             that.countResult.countNotifier.resetNotifier();
 
             that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_START, millisecondsAtStart);
-            that.isCounting = true;
+            that.state = COUNTER_STATUS.COUNTING;
         }
 
         function suspend() {
             // clear the interval as it stops the further counting
             clearIntervalFromCountree();
-            if (that.isCounting) {
+            if (status === COUNTER_STATUS.COUNTING) {
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_SUSPEND, millisecondsForContinuePoint);
             }
-            that.isCounting = false;
+            that.state = COUNTER_STATUS.SUSPENDED;
         }
 
         function resume() {
             // only continue counting if the counter isn't already active and the users callback is available
-            if (!that.isCounting && intervalCallbackRef) {
+            if ((that.state === COUNTER_STATUS.SUSPENDED) && intervalCallbackRef) {
                 intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint, true);
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESUME, millisecondsForContinuePoint);
-                that.isCounting = true;
+                that.state = COUNTER_STATUS.COUNTING;
             }
         }
 
