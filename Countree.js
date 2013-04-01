@@ -95,13 +95,6 @@
         // This result will be provided as parameter to the users callback (@see start(callback))
         this.countResult = new CountResult(this, getTotalMillisecondsFromObject(this.options));
 
-        /**
-         * Indicates if the counter is currently active by counting down or up.
-         * @type {Boolean}
-         */
-        this.isCounting = false;
-
-
         function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
             //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
             updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback);

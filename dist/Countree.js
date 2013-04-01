@@ -1,6 +1,10 @@
-/*! Countree - v0.1 - 2013-02-25
-* https://github.com/SaschaKrause/Countree
-* Copyright (c) 2013 Sascha Krause; Licensed MIT */
+/*
+ * Countree
+ * https://github.com/SaschaKrause/Countree
+ *
+ * Copyright (c) 2013 Sascha Krause
+ * Licensed under the MIT license.
+ */
 
 // TODO: [FEATURE]  provide the possibility to register some kind of event listener to a countree which is called on custom events (e.g. "5 minutes before counter ends")
 // TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
@@ -28,6 +32,13 @@
         MINUTES: 'm',
         HOURS: 'h',
         DAYS: 'd'
+    };
+
+    var COUNTER_STATUS = {
+        COUNTING: 'counting',
+        SUSPENDED: 'suspended',
+        STOPPED: 'stopped',
+        NOT_STARTED: 'not started'
     };
 
     /**
@@ -74,19 +85,15 @@
             direction: COUNT_DIRECTION.UP,
             name: 'untitled'
         };
+
+        this.state = COUNTER_STATUS.NOT_STARTED;
+
         // update and extend the default options with the user config options
         extendObjectBy(this.options, configOptions);
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
         // This result will be provided as parameter to the users callback (@see start(callback))
         this.countResult = new CountResult(this, getTotalMillisecondsFromObject(this.options));
-
-        /**
-         * Indicates if the counter is currently active by counting down or up.
-         * @type {Boolean}
-         */
-        this.isCounting = false;
-
 
         function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
             //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
@@ -177,24 +184,24 @@
             that.countResult.countNotifier.resetNotifier();
 
             that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_START, millisecondsAtStart);
-            that.isCounting = true;
+            that.state = COUNTER_STATUS.COUNTING;
         }
 
         function suspend() {
             // clear the interval as it stops the further counting
             clearIntervalFromCountree();
-            if (that.isCounting) {
+            if (status === COUNTER_STATUS.COUNTING) {
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_SUSPEND, millisecondsForContinuePoint);
             }
-            that.isCounting = false;
+            that.state = COUNTER_STATUS.SUSPENDED;
         }
 
         function resume() {
             // only continue counting if the counter isn't already active and the users callback is available
-            if (!that.isCounting && intervalCallbackRef) {
+            if ((that.state === COUNTER_STATUS.SUSPENDED) && intervalCallbackRef) {
                 intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint, true);
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESUME, millisecondsForContinuePoint);
-                that.isCounting = true;
+                that.state = COUNTER_STATUS.COUNTING;
             }
         }
 
