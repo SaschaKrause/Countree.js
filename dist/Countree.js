@@ -34,7 +34,7 @@
         DAYS: 'd'
     };
 
-    var COUNTER_STATUS = {
+    var COUNTER_STATE = {
         COUNTING: 'counting',
         SUSPENDED: 'suspended',
         STOPPED: 'stopped',
@@ -86,7 +86,7 @@
             name: 'untitled'
         };
 
-        this.state = COUNTER_STATUS.NOT_STARTED;
+        this.state = COUNTER_STATE.NOT_STARTED;
 
         // update and extend the default options with the user config options
         extendObjectBy(this.options, configOptions);
@@ -149,6 +149,7 @@
             if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
                     clearIntervalFromCountree();
+                    that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                 }
             }
             else if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
@@ -156,10 +157,9 @@
                     that.countResult.update(0);
 //                callback(that.countResult);
                     clearIntervalFromCountree();
+                    that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                 }
             }
-
-            that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
         }
 
         function clearIntervalFromCountree() {
@@ -184,24 +184,24 @@
             that.countResult.countNotifier.resetNotifier();
 
             that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_START, millisecondsAtStart);
-            that.state = COUNTER_STATUS.COUNTING;
+            that.state = COUNTER_STATE.COUNTING;
         }
 
         function suspend() {
             // clear the interval as it stops the further counting
             clearIntervalFromCountree();
-            if (status === COUNTER_STATUS.COUNTING) {
+            if (that.state === COUNTER_STATE.COUNTING) {
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_SUSPEND, millisecondsForContinuePoint);
             }
-            that.state = COUNTER_STATUS.SUSPENDED;
+            that.state = COUNTER_STATE.SUSPENDED;
         }
 
         function resume() {
             // only continue counting if the counter isn't already active and the users callback is available
-            if ((that.state === COUNTER_STATUS.SUSPENDED) && intervalCallbackRef) {
+            if ((that.state === COUNTER_STATE.SUSPENDED) && intervalCallbackRef) {
                 intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint, true);
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESUME, millisecondsForContinuePoint);
-                that.state = COUNTER_STATUS.COUNTING;
+                that.state = COUNTER_STATE.COUNTING;
             }
         }
 
@@ -225,7 +225,7 @@
         var overallMillisecondsLeft = 0;
         var formattedTimeTmp = new FormattedTime();
 
-        this.countNotifier = new CountNotifier(countreeRef, this.millisecondsStartingPoint);
+        this.countNotifier = new CountNotifier(countreeRef, millisecondsStartingPoint);
 
 
         function update(milliseconds) {
