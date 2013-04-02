@@ -29,7 +29,7 @@
     ],
     "main": "./Countree.js",
     "scripts": {
-        "test": "grunt test"
+        "test": "grunt nodeunit"
     },
     "keywords": []
 }
