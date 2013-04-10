@@ -37,7 +37,7 @@
     var COUNTER_STATE = {
         COUNTING: 'counting',
         SUSPENDED: 'suspended',
-        STOPPED: 'stopped',
+        RESETED: 'reseted',
         NOT_STARTED: 'not started'
     };
 
@@ -163,7 +163,9 @@
         }
 
         function clearIntervalFromCountree() {
-            clearInterval(intervalRef);
+            if (intervalRef) {
+                clearInterval(intervalRef);
+            }
         }
 
 
@@ -174,9 +176,7 @@
             intervalCallbackRef = callback;
 
             // clear the interval if there is one (so that a "clean restart" is possible)
-            if (intervalRef) {
-                clearInterval(intervalRef);
-            }
+            clearIntervalFromCountree();
 
 
             // start the counter and remember the intervalId as reference for later (e.g. for restarting or suspending)
@@ -205,6 +205,17 @@
             }
         }
 
+        function reset() {
+            // clear the interval if there is one (so that a "clean restart" is possible)
+            clearIntervalFromCountree();
+
+            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromObject(that.options) : 0;
+
+            that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESET, millisecondsAtStart);
+            that.countResult.update(millisecondsAtStart);
+            that.state = COUNTER_STATE.RESETED;
+        }
+
         function notifyAt(notifyConfig, callback) {
             that.countResult.countNotifier.addNotifier(notifyConfig, callback, that.options.direction);
         }
@@ -213,6 +224,7 @@
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
+        this.reset = reset;
         this.notifyAt = notifyAt;
     }
 
@@ -341,7 +353,8 @@
             ON_START: 'onStart',
             ON_FINISH: 'onFinish',
             ON_RESUME: 'onResume',
-            ON_SUSPEND: 'onSuspend'
+            ON_SUSPEND: 'onSuspend',
+            ON_RESET: 'onReset'
         };
 
         /**
