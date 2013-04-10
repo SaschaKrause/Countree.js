@@ -97,7 +97,7 @@
 
         function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
             //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
-            updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback);
+            updateCounterBeforeIntervalStartIfNeeded(totalMillisecondsToGo, callback, resumed);
 
             var timeToAddWhenResumed = resumed ? millisecondsForContinuePoint : 0;
 
@@ -128,20 +128,27 @@
         }
 
         /**
-         * Before the interval starts counting, the result should be forwarded to the callback with its initial value
+         * Before the interval starts counting, the result should be forwarded to the callback with its initial value.
+         * But only if the counter is started initially (if resumed === false)
          * @param totalMillisecondsToGo
          * @param callback
+         * @param resumed boolean that indicates the the interval was started initially, or if the counter is resumed
+         * after suspend
          */
-        function updateCounterBeforeIntervalStart(totalMillisecondsToGo, callback) {
-            if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
-                that.countResult.update(totalMillisecondsToGo);
-            }
-            //when counting up
-            else if (countDirectionIs(COUNT_DIRECTION.UP)) {
-                that.countResult.update(0);
-            }
+        function updateCounterBeforeIntervalStartIfNeeded(totalMillisecondsToGo, callback, resumed) {
 
-            callback(that.countResult);
+            //only proceed if the counter started initially
+            if(!resumed){
+                if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
+                    that.countResult.update(totalMillisecondsToGo);
+                }
+                //when counting up
+                else if (countDirectionIs(COUNT_DIRECTION.UP)) {
+                    that.countResult.update(0);
+                }
+
+                callback(that.countResult);
+            }
         }
 
 
