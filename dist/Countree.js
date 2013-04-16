@@ -6,16 +6,6 @@
  * Licensed under the MIT license.
  */
 
-// TODO: [FEATURE-2]  be able to add the config after instantiation (e.g. setOptions(options))
-// TODO: [FEATURE-3]  get progress in % (e.g. 13% are already counted down/up)
-// TODO: [FEATURE-4]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
-// TODO: [FEATURE-5]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
-// TODO: [BUG-1]      'notifyAt' seems to be buggy: when counting down the 'beforeEnd' event won't fire (when counting up, the 'afterStart' seems broken)
-// TODO: [BUG-2]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
-// TODO: [BUG-3]      Error handling strategy (and convenience methods!) for public methods
-// TODO: [TEST-1]     add some Jasmine tests
-// TODO: [DEMO-1]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.formattedTime()
-
 (function (exports) {
 
     /** @constant */
@@ -42,10 +32,10 @@
 
     /**
      *
-     * @param config
+     * @param paramOptions
      * @constructor
      */
-    function Countree(config) {
+    function Countree(paramOptions) {
 
         var that = this;
 
@@ -99,12 +89,12 @@
 
         this.state = COUNTER_STATE.NOT_STARTED;
 
-        // update and extend the default options with the user config options
-        extendObjectBy(this.options, config);
+//        update and extend the default options with the user config options
+        extendObjectBy(this.options, paramOptions);
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
         // This result will be provided as parameter to the users start-callback (@see start(callback))
-        this.countResult = new CountResult(this, getTotalMillisecondsFromConfig(this.options));
+        this.countResult = new CountResult(this, getTotalMillisecondsFromOptions(this.options));
 
 
         function countOnInterval(countStartDate, totalMillisecondsToGo, resumed) {
@@ -142,7 +132,7 @@
                 countingCallbackFromUser.invoke(that.countResult);
 
                 // need to check if the counter is done with counting
-                checkIfCounterFinished(millisecondsForContinuePoint, getTotalMillisecondsFromConfig(that.options));
+                checkIfCounterFinished(millisecondsForContinuePoint, getTotalMillisecondsFromOptions(that.options));
             }
 
             // kick of the interval
@@ -210,7 +200,7 @@
 
 
         function start(callback) {
-            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromConfig(that.options) : 0;
+            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromOptions(that.options) : 0;
 
             //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
             countingCallbackFromUser.set(callback);
@@ -220,7 +210,7 @@
 
 
             // start the counter and remember the intervalId as reference for later (e.g. for restarting or suspending)
-            intervalRef = countOnInterval(new Date(), getTotalMillisecondsFromConfig(that.options), false);
+            intervalRef = countOnInterval(new Date(), getTotalMillisecondsFromOptions(that.options), false);
             that.countResult.countNotifier.resetNotifier();
 
             that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_START, millisecondsAtStart);
@@ -250,15 +240,16 @@
         }
 
 
-        function setConfig() {
-
+        function setOptions(paramOptions) {
+            // update and extend the default options with the user config options
+            extendObjectBy(that.options, paramOptions);
         }
 
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
         this.notifyAt = notifyAt;
-        this.setConfig = setConfig;
+        this.setOptions = setOptions;
     }
 
     /**
@@ -407,7 +398,7 @@
             }
             else {
                 notifyAtTimeArray.push({
-                    millisecondsToNotify: getTotalMillisecondsFromConfig(notifyConfig),
+                    millisecondsToNotify: getTotalMillisecondsFromOptions(notifyConfig),
                     when: notifyConfig.when || WHEN.BEFORE_END,
                     callback: callback,
                     alreadyFired: false,
@@ -550,13 +541,13 @@
     }
 
 
-    function getTotalMillisecondsFromConfig(config) {
+    function getTotalMillisecondsFromOptions(options) {
 
-        return config.milliseconds || 0 +
-            ((config.seconds || 0) * 1e3) + // 1000
-            ((config.minutes || 0) * 6e4) + // 1000 * 60
-            ((config.hours || 0) * 36e5) + // 1000 * 60 * 60
-            ((config.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
+        return options.milliseconds || 0 +
+            ((options.seconds || 0) * 1e3) + // 1000
+            ((options.minutes || 0) * 6e4) + // 1000 * 60
+            ((options.hours || 0) * 36e5) + // 1000 * 60 * 60
+            ((options.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
     }
 
 
