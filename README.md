@@ -3,43 +3,19 @@
 
 [![Build Status](https://travis-ci.org/SaschaKrause/Countree.js.png)](https://travis-ci.org/SaschaKrause/Countree.js)
 
-Test
+[view Backlog](backlog.md)
 
 ## Getting Started
-### On the server
-Install the module with: `npm install Countree`
+_(Coming soon)_
 
-```javascript
-var Countree = require('Countree');
-Countree.awesome(); // "awesome"
-```
 
 ### In the browser
 Download the [production version][min] or the [development version][max].
 
 [min]: https://raw.github.com/SaschaKrause/Countree/master/dist/Countree.min.js
 [max]: https://raw.github.com/SaschaKrause/Countree/master/dist/Countree.js
+_(Coming soon)_
 
-In your web page:
-
-```html
-<script src="dist/Countree.min.js"></script>
-<script>
-awesome(); // "awesome"
-</script>
-```
-
-In your code, you can attach Countree's methods to any object.
-
-```html
-<script>
-this.exports = Bocoup.utils;
-</script>
-<script src="dist/Countree.min.js"></script>
-<script>
-Bocoup.utils.awesome(); // "awesome"
-</script>
-```
 
 ## Documentation
 _(Coming soon)_
