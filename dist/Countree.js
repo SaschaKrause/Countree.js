@@ -6,16 +6,15 @@
  * Licensed under the MIT license.
  */
 
-// TODO: [FEATURE]  provide the possibility to register some kind of event listener to a countree which is called on custom events (e.g. "5 minutes before counter ends")
-// TODO: [FEATURE]  be able to add the configOptions after instantiation (e.g. setOptions(options))
-// TODO: [FEATURE]  get progress in % (e.g. 13% are already counted down/up)
-// TODO: [FEATURE]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
-// TODO: [FEATURE]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
-// TODO: [BUG]      'notifyAt' seems to be buggy: when counting down the 'beforeEnd' event won't fire (when counting up, the 'afterStart' seems broken)
-// TODO: [BUG]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
-// TODO: [BUG]      Error handling strategy (and convenience methods!) for public methods
-// TODO: [TEST]     add some Jasmine tests
-// TODO: [DEMO]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.formattedTime()
+// TODO: [FEATURE-2]  be able to add the config after instantiation (e.g. setOptions(options))
+// TODO: [FEATURE-3]  get progress in % (e.g. 13% are already counted down/up)
+// TODO: [FEATURE-4]  provide option: CONTINUE_AFTER_FINISH and STOP_AFTER_FINISH (e.g. when counting from 10, should the counter stop at 0, or should it go further [e.g. to -100])
+// TODO: [FEATURE-5]  provide the possibility to not just only count the time, but also other numeric stuff (e.g. count +1 every time one hits a button)
+// TODO: [BUG-1]      'notifyAt' seems to be buggy: when counting down the 'beforeEnd' event won't fire (when counting up, the 'afterStart' seems broken)
+// TODO: [BUG-2]      when not displaying the milliseconds to the user, it seems like a bug (to him) that a second is "missing" (because of rounding issues)
+// TODO: [BUG-3]      Error handling strategy (and convenience methods!) for public methods
+// TODO: [TEST-1]     add some Jasmine tests
+// TODO: [DEMO-1]     use a templating framework (e.g. handlebars) to demonstrate the power of the CountResult.formattedTime()
 
 (function (exports) {
 
@@ -43,10 +42,10 @@
 
     /**
      *
-     * @param configOptions
+     * @param config
      * @constructor
      */
-    function Countree(configOptions) {
+    function Countree(config) {
 
         var that = this;
 
@@ -68,7 +67,19 @@
         /**
          *
          */
-        var intervalCallbackRef;
+        var countingCallbackFromUser = {
+            value: undefined,
+            set: function (val) {
+                this.value = val;
+            },
+            get: function () {
+                return this.value;
+            },
+            invoke: function (param) {
+                this.value(param);
+            }
+
+        };
 
 
         this.version = '0.0.1';
@@ -89,36 +100,55 @@
         this.state = COUNTER_STATE.NOT_STARTED;
 
         // update and extend the default options with the user config options
-        extendObjectBy(this.options, configOptions);
+        extendObjectBy(this.options, config);
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
-        // This result will be provided as parameter to the users callback (@see start(callback))
-        this.countResult = new CountResult(this, getTotalMillisecondsFromObject(this.options));
+        // This result will be provided as parameter to the users start-callback (@see start(callback))
+        this.countResult = new CountResult(this, getTotalMillisecondsFromConfig(this.options));
 
-        function onCountingInterval(callback, countStartDate, totalMillisecondsToGo, resumed) {
+
+        function countOnInterval(countStartDate, totalMillisecondsToGo, resumed) {
             //directly update the countResult BEFORE the interval starts (so that the users callback is invoked immediately)
-            updateCounterBeforeIntervalStartIfNeeded(totalMillisecondsToGo, callback, resumed);
+            initCounterDefaultsIfNeeded(totalMillisecondsToGo, resumed);
 
+            // when the counter is resumed, we need to add the time that has been passed
             var timeToAddWhenResumed = resumed ? millisecondsForContinuePoint : 0;
+            // the current time minus the time the counter has been started
+            var passedTime;
 
-            var calculateMilliseconds = function () {
+            /**
+             * @returns {Number} the calculated milliseconds that are left (when counting down) or passed (when counting up)
+             */
+            function calculateMilliseconds() {
+                passedTime = (new Date().getTime() - countStartDate.getTime());
                 if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
-                    millisecondsForContinuePoint = totalMillisecondsToGo - (new Date().getTime() - countStartDate.getTime());
+                    return totalMillisecondsToGo - passedTime;
                 }
                 else if (countDirectionIs(COUNT_DIRECTION.UP)) {
-                    millisecondsForContinuePoint = (new Date().getTime() + timeToAddWhenResumed) - countStartDate.getTime();
+                    return passedTime + timeToAddWhenResumed;
                 }
+                return undefined;
+            }
+
+            /**
+             * invoked at each interval tick.
+             */
+            function proceedInterval() {
+                millisecondsForContinuePoint = calculateMilliseconds();
 
                 // update the result and forward it to the users callback as a countResult object
                 that.countResult.update(millisecondsForContinuePoint);
-                callback(that.countResult);
+                // lets invoke the users callback and provide the countResult as parameter
+                countingCallbackFromUser.invoke(that.countResult);
 
                 // need to check if the counter is done with counting
-                checkIfCounterFinished(millisecondsForContinuePoint, getTotalMillisecondsFromObject(that.options), callback);
-            };
+                checkIfCounterFinished(millisecondsForContinuePoint, getTotalMillisecondsFromConfig(that.options));
+            }
 
-            return setInterval(calculateMilliseconds, that.options.updateIntervalInMilliseconds);
+            // kick of the interval
+            return setInterval(proceedInterval, that.options.updateIntervalInMilliseconds);
         }
+
 
         /**
          * @private
@@ -129,16 +159,19 @@
 
         /**
          * Before the interval starts counting, the result should be forwarded to the callback with its initial value.
-         * But only if the counter is started initially (if resumed === false)
+         * But only if the counter is started initially (if resumed === false).
+         *
+         * That is necessary, as it shows the user that the counter has start counting. Otherwise, if the time until the
+         * first interval kicks in is too long, nothing would be visible to the user:
+         * Click the start button -> wait an interval-tick-> the counter refreshes for the first time.
          * @param totalMillisecondsToGo
-         * @param callback
          * @param resumed boolean that indicates the the interval was started initially, or if the counter is resumed
          * after suspend
          */
-        function updateCounterBeforeIntervalStartIfNeeded(totalMillisecondsToGo, callback, resumed) {
+        function initCounterDefaultsIfNeeded(totalMillisecondsToGo, resumed) {
 
             //only proceed if the counter started initially
-            if(!resumed){
+            if (!resumed) {
                 if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                     that.countResult.update(totalMillisecondsToGo);
                 }
@@ -147,29 +180,29 @@
                     that.countResult.update(0);
                 }
 
-                callback(that.countResult);
+                countingCallbackFromUser.invoke(that.countResult);
             }
         }
 
 
-        function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo, callback) {
+        function checkIfCounterFinished(millisecondsProceeded, totalMillisecondsToGo) {
             if (countDirectionIs(COUNT_DIRECTION.UP)) {
                 if (millisecondsProceeded >= totalMillisecondsToGo) {
-                    clearIntervalFromCountree();
+                    clearCountingIntervalFromCountree();
                     that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                 }
             }
             else if (countDirectionIs(COUNT_DIRECTION.DOWN)) {
                 if (millisecondsProceeded <= 0) {
                     that.countResult.update(0);
-//                callback(that.countResult);
-                    clearIntervalFromCountree();
+//                countingCallbackFromUser.invoke(that.countResult);
+                    clearCountingIntervalFromCountree();
                     that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_FINISH, millisecondsProceeded);
                 }
             }
         }
 
-        function clearIntervalFromCountree() {
+        function clearCountingIntervalFromCountree() {
             if (intervalRef) {
                 clearInterval(intervalRef);
             }
@@ -177,17 +210,17 @@
 
 
         function start(callback) {
-            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromObject(that.options) : 0;
+            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromConfig(that.options) : 0;
 
             //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
-            intervalCallbackRef = callback;
+            countingCallbackFromUser.set(callback);
 
             // clear the interval if there is one (so that a "clean restart" is possible)
-            clearIntervalFromCountree();
+            clearCountingIntervalFromCountree();
 
 
             // start the counter and remember the intervalId as reference for later (e.g. for restarting or suspending)
-            intervalRef = onCountingInterval(intervalCallbackRef, new Date(), getTotalMillisecondsFromObject(that.options), false);
+            intervalRef = countOnInterval(new Date(), getTotalMillisecondsFromConfig(that.options), false);
             that.countResult.countNotifier.resetNotifier();
 
             that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_START, millisecondsAtStart);
@@ -196,7 +229,7 @@
 
         function suspend() {
             // clear the interval as it stops the further counting
-            clearIntervalFromCountree();
+            clearCountingIntervalFromCountree();
             if (that.state === COUNTER_STATE.COUNTING) {
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_SUSPEND, millisecondsForContinuePoint);
             }
@@ -205,22 +238,11 @@
 
         function resume() {
             // only continue counting if the counter isn't already active and the users callback is available
-            if ((that.state === COUNTER_STATE.SUSPENDED) && intervalCallbackRef) {
-                intervalRef = onCountingInterval(intervalCallbackRef, new Date(), millisecondsForContinuePoint, true);
+            if ((that.state === COUNTER_STATE.SUSPENDED) && countingCallbackFromUser.get()) {
+                intervalRef = countOnInterval(new Date(), millisecondsForContinuePoint, true);
                 that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESUME, millisecondsForContinuePoint);
                 that.state = COUNTER_STATE.COUNTING;
             }
-        }
-
-        function reset() {
-            // clear the interval if there is one (so that a "clean restart" is possible)
-            clearIntervalFromCountree();
-
-            var millisecondsAtStart = countDirectionIs(COUNT_DIRECTION.DOWN) ? getTotalMillisecondsFromObject(that.options) : 0;
-
-            that.countResult.countNotifier.fireNotificationEvent(that.countResult.countNotifier.EVENT.ON_RESET, millisecondsAtStart);
-            that.countResult.update(millisecondsAtStart);
-            that.state = COUNTER_STATE.RESETED;
         }
 
         function notifyAt(notifyConfig, callback) {
@@ -228,11 +250,15 @@
         }
 
 
+        function setConfig() {
+
+        }
+
         this.start = start;
         this.suspend = suspend;
         this.resume = resume;
-        this.reset = reset;
         this.notifyAt = notifyAt;
+        this.setConfig = setConfig;
     }
 
     /**
@@ -381,7 +407,7 @@
             }
             else {
                 notifyAtTimeArray.push({
-                    millisecondsToNotify: getTotalMillisecondsFromObject(notifyConfig),
+                    millisecondsToNotify: getTotalMillisecondsFromConfig(notifyConfig),
                     when: notifyConfig.when || WHEN.BEFORE_END,
                     callback: callback,
                     alreadyFired: false,
@@ -524,13 +550,13 @@
     }
 
 
-    function getTotalMillisecondsFromObject(object) {
+    function getTotalMillisecondsFromConfig(config) {
 
-        return object.milliseconds || 0 +
-            ((object.seconds || 0) * 1e3) + // 1000
-            ((object.minutes || 0) * 6e4) + // 1000 * 60
-            ((object.hours || 0) * 36e5) + // 1000 * 60 * 60
-            ((object.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
+        return config.milliseconds || 0 +
+            ((config.seconds || 0) * 1e3) + // 1000
+            ((config.minutes || 0) * 6e4) + // 1000 * 60
+            ((config.hours || 0) * 36e5) + // 1000 * 60 * 60
+            ((config.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
     }
 
 

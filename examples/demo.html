@@ -12,7 +12,6 @@
 <input type="button" onclick="restart()" value="(re)start">
 <input type="button" onclick="suspend()" value="suspend">
 <input type="button" onclick="resume()" value="resume">
-<input type="button" onclick="reset()" value="resume">
 
 
 <script type="text/javascript" src="../Countree.js"></script>
@@ -26,7 +25,7 @@
             seconds: 10,
             hours: 0,
             days: 0,
-            updateIntervalInMilliseconds: 1000,
+            updateIntervalInMilliseconds: 10,
             name: 'my first counter'
         };
 
@@ -45,11 +44,6 @@
 
         window.resume = function () {
             counter.resume();
-//            console.log("counter state: " + counter.state);
-        };
-
-        window.reset = function () {
-            counter.reset();
 //            console.log("counter state: " + counter.state);
         };
 
