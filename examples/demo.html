@@ -10,77 +10,68 @@
 
 <div id="counter" style="font-size: 20pt">--</div>
 <input type="button" onclick="restart()" value="(re)start">
-<input type="button" onclick="suspend()" value="suspend">
-<input type="button" onclick="resume()" value="resume">
 
 
 <script type="text/javascript" src="../Countree.js"></script>
 <script type="text/javascript">
 
     (function () {
+/*
 
         var counterOption = {
             direction: 'up',
-            minutes: 0,
-            seconds: 10,
-            hours: 0,
-            days: 0,
+            startFrom: {
+                minutes: 0,
+                seconds: 10,
+                hours: 0,
+                days: 0
+            },
+            stopAt: {
+            },
             updateIntervalInMilliseconds: 10,
             name: 'my first counter'
         };
+*/
 
-        var counter = new Countree(counterOption);
 
-        console.log("counter state: " + counter.state);
+        var customTimeCounterOption = {
+            name: 'my custom time count',
+            updateIntervalInMilliseconds: 10,
+            customTimeCount: {
+                direction: 'up',
+                startFrom: {
+                    minutes: 0,
+                    seconds: 10,
+                    hours: 0,
+                    days: 0
+                },
+                stopAt: {}
+            }
+        };
+
+
+        var dateCounterOption = {
+            name: 'my date time count',
+            updateIntervalInMilliseconds: 10,
+            dateTimeCount: {
+                date: new Date(2013, 3, 17, 21, 29)
+            }
+        };
+
+
+
+        var counter = new Countree();
+        counter.setOptions(customTimeCounterOption);
+
         window.restart = function () {
             counter.start(onCountInterval);
-//            console.log("counter state: " + counter.state);
+
         };
 
-        window.suspend = function () {
-            counter.suspend();
-//            console.log("counter state: " + counter.state);
-        };
-
-        window.resume = function () {
-            counter.resume();
-//            console.log("counter state: " + counter.state);
-        };
 
         function onCountInterval(countResult) {
-            var msPassed = countResult.getMillisecondsLeft();
-            var d = countResult.formattedTime().getDays(1);
-            var h = countResult.formattedTime().getHours(2);
-            var m = countResult.formattedTime().getMinutes(2);
-            var s = countResult.formattedTime().getSeconds(2);
-            var ms = countResult.formattedTime().getMilliSeconds(3);
-
-            window.document.getElementById('counter').innerHTML = d + ", " + h + ":" + m + ":" + s + ":" + ms;
-
+           console.log("hallo");
         }
-
-
-        counter.notifyAt({seconds: 3, when: 'beforeEnd'}, function (countreeReference, milliseconds) {
-            console.log("just 3 seconds left @", countreeReference.options.name, "", milliseconds);
-        });
-
-        counter.notifyAt({seconds: 5, when: 'afterStart'}, function (countreeReference, milliseconds) {
-            console.log("the first 5 seconds are already over @", countreeReference.options.name, "", milliseconds);
-        });
-        counter.notifyAt({event: 'onStart'}, function (countreeReference, milliseconds) {
-            console.log("counter started", countreeReference.options.name, milliseconds);
-        });
-
-        counter.notifyAt({event: 'onFinish'}, function (countreeReference, milliseconds) {
-            console.log("counter finished", countreeReference.options.name, milliseconds);
-        });
-
-        counter.notifyAt({event: 'onSuspend'}, function (countreeReference, milliseconds) {
-            console.log("counter suspended", countreeReference.options.name, milliseconds);
-        });
-        counter.notifyAt({event: 'onResume'}, function (countreeReference, milliseconds) {
-            console.log("counter resumed", countreeReference.options.name, milliseconds);
-        });
 
     })();
 </script>
