@@ -26,7 +26,6 @@
     var COUNTER_STATE = {
         COUNTING: 'counting',
         SUSPENDED: 'suspended',
-        RESETED: 'reseted',
         NOT_STARTED: 'not started'
     };
 
@@ -77,20 +76,24 @@
         // fill options with defaults
         // furthermore, this gives an overview of the available (and settable) user configurable options.
         this.options = {
-            milliseconds: 0,
-            seconds: 0,
-            minutes: 0,
-            hours: 0,
-            days: 0,
+            startFrom: {
+                milliseconds: 0,
+                seconds: 0,
+                minutes: 0,
+                hours: 0,
+                days: 0
+            },
             updateIntervalInMilliseconds: 1000,
             direction: COUNT_DIRECTION.UP,
+            date: null,
             name: 'untitled'
         };
 
         this.state = COUNTER_STATE.NOT_STARTED;
 
 //        update and extend the default options with the user config options
-        extendObjectBy(this.options, paramOptions);
+//        extendObjectBy(this.options, paramOptions);
+        setOptions(paramOptions);
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
         // This result will be provided as parameter to the users start-callback (@see start(callback))
@@ -243,6 +246,23 @@
         function setOptions(paramOptions) {
             // update and extend the default options with the user config options
             extendObjectBy(that.options, paramOptions);
+            // now that we have a options object, we need to validate it.
+            validateOptions();
+        }
+
+
+        function validateOptions() {
+            // when there is a date provided, we need to set the count direction accordingly:
+            // - if the date is in the future, the count direction needs to be COUNT_DIRECTION.UP (count towards the date)
+            // - if the date is in the past, the count direction needs to be COUNT_DIRECTION.DOWN
+            if (that.options.date) {
+                var now = new Date();
+                if (that.options.date > now) {
+                    that.options.direction = COUNT_DIRECTION.DOWN;
+                } else {
+                    that.options.direction = COUNT_DIRECTION.UP;
+                }
+            }
         }
 
         this.start = start;
@@ -398,7 +418,7 @@
             }
             else {
                 notifyAtTimeArray.push({
-                    millisecondsToNotify: getTotalMillisecondsFromOptions(notifyConfig),
+                    millisecondsToNotify: getMillisecondsFromTimeObject(notifyConfig),
                     when: notifyConfig.when || WHEN.BEFORE_END,
                     callback: callback,
                     alreadyFired: false,
@@ -542,14 +562,30 @@
 
 
     function getTotalMillisecondsFromOptions(options) {
+        var milliseconds = 0;
 
-        return options.milliseconds || 0 +
-            ((options.seconds || 0) * 1e3) + // 1000
-            ((options.minutes || 0) * 6e4) + // 1000 * 60
-            ((options.hours || 0) * 36e5) + // 1000 * 60 * 60
-            ((options.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
+        if (options.date) {
+            var now = new Date();
+            if (options.date > now) {
+                milliseconds = options.date.getTime() - now.getTime();
+            } else {
+                milliseconds = now.getTime() - options.date.getTime();
+            }
+
+        } else {
+            milliseconds = getMillisecondsFromTimeObject(options.startFrom);
+        }
+
+        return milliseconds
     }
 
+   function getMillisecondsFromTimeObject(timeObject) {
+       return timeObject.milliseconds || 0 +
+           ((timeObject.seconds || 0) * 1e3) + // 1000
+           ((timeObject.minutes || 0) * 6e4) + // 1000 * 60
+           ((timeObject.hours || 0) * 36e5) + // 1000 * 60 * 60
+           ((timeObject.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
+   }
 
     /************************************
      Exports
