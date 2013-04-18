@@ -46,7 +46,8 @@
                     days: 0
                 },
                 stopAt: {}
-            }
+            },
+            onInterval: onCountInterval
         };
 
 
@@ -55,7 +56,8 @@
             updateIntervalInMilliseconds: 10,
             dateTimeCount: {
                 date: new Date(2013, 3, 17, 21, 29)
-            }
+            },
+            onInterval: onCountInterval
         };
 
 
@@ -63,14 +65,17 @@
         var counter = new Countree();
         counter.setOptions(customTimeCounterOption);
 
+        counter.init();
+
+
         window.restart = function () {
-            counter.start(onCountInterval);
+            counter.start();
 
         };
 
 
         function onCountInterval(countResult) {
-           console.log("hallo");
+           console.log("user callback: , " + countResult.formattedTime().toString());
         }
 
     })();

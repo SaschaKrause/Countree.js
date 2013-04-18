@@ -26,7 +26,8 @@
     var ERROR_MESSAGES = {
         ERR_01_OPTIONS_NOT_SET: "ERR-01: Please provide some counter options. You can add them directly add instantiation (e.g. new Countree({})) or after that via countree.setOptions({}). Just make sure that there are options provided before starting the Countree.",
         ERR_02_OPTIONS_COUNT_TYPE_WRONG: "ERR-02: You need to provide (exactly) one of the following object inside your Countree option configuration: 'customTimeCount:{}' OR 'dateTimeCount:{}'",
-        ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN: "ERR-03: You need to specify an 'direction' (with 'up' or 'down') or provide an object to the 'stopAt' property"
+        ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN: "ERR-03: You need to specify an 'direction' (with 'up' or 'down') or provide an object to the 'stopAt' property",
+        ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED: "ERR-04: No 'onInterval'-callback defined in countree options. This callback is necessary as it will be invoked on counting updates at each interval"
     };
 
 
@@ -94,6 +95,10 @@
              */
             alreadyPastMilliseconds: -1,
             /**
+             *
+             */
+            leftMilliseconds: -1,
+            /**
              * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending or restarting).
              * A counter can only have one interval reference (because a single counter can only create a single interval).
              */
@@ -101,86 +106,230 @@
             /**
              *
              */
-            countingCallbackFromUser: null
+            onIntervalCallbackFromUser: null
         };
 
+        var internalPropertiesHelper = new InternalPropertiesHelper(internalCounterProperties);
 
-        // fill options with some basic defaults
-        this.options = {
-            updateIntervalInMilliseconds: 1000,
-            name: 'untitled'
-        };
 
         this.state = COUNTER_STATE.NOT_STARTED;
 
 //      update and extend the default options with the user config options (if provided)
         paramOptions && setOptions(paramOptions);
 
-        function start(callback) {
 
+        // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
+        // This result will be provided as parameter to the users interval callback
+        var countResult = new CountResult(internalCounterProperties);
+
+        /**
+         * Init the countree by calling the user's onInterval-callback ONCE without starting the counter.
+         * This is great for updating the view with the calculated starting milliseconds.
+         */
+        this.init = function init() {
             checkIfOptionsHasBeenSet();
-            //remember the users callback to be able to continue the counter without providing the callback again later (on resume())
-            internalCounterProperties.countingCallbackFromUser = callback;
+            countResult.update();
+            internalCounterProperties.onIntervalCallbackFromUser(countResult);
+        };
 
-        }
-
-        function init() {
-
-        }
-
-        function setOptions(paramOptions) {
-            internalCounterProperties.userOptionsProvided = true;
-            // update and extend the default options with the user config options
-            extendObjectBy(that.options, paramOptions);
-            // now that we have a options object, we need to fill the internalCounterProperties
-            // (because we will do all the calculations based on the internalCounterProperties rather than on the options).
-            fillInternalCounterPropertiesFromOptions();
-        }
+        /**
+         * Kick of the counting interval. Every "interval-tick" the onInterval callback (provided via options) is invoked
+         * and the newly calculated countResult is provided as parameter.
+         */
+        this.start = function start() {
+            checkIfOptionsHasBeenSet();
+            countResult.update();
+            internalCounterProperties.onIntervalCallbackFromUser(countResult);
+        };
 
 
-        function fillInternalCounterPropertiesFromOptions() {
+        this.setOptions = function setOptions(paramOptions) {
+            internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions);
+        };
 
-            var isCustomTimeCount = !!that.options.customTimeCount && !that.options.dateTimeCount;
-            var isDateTimeCount = !!that.options.dateTimeCount && !that.options.customTimeCount;
-
-            if (isCustomTimeCount) {
-                fillInternalCounterPropertiesFromCustomTimeCount(that.options.customTimeCount);
-            }
-            // counting up to or down to a provided date
-            else if (isDateTimeCount) {
-                console.log("date time");
-            }
-            else {
-               console.error(ERROR_MESSAGES.ERR_02_OPTIONS_COUNT_TYPE_WRONG);
-            }
-        }
-
-
-        function fillInternalCounterPropertiesFromCustomTimeCount(customTimeCount) {
-            // set the startCounterFromMilliseconds at the internalCounterProperties. If nothing is provided from the users options, 0 milliseconds will be used as starting point
-            internalCounterProperties.startCounterFromMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.startFrom || {});
-
-            // set the stopAtMilliseconds at the internalCounterProperties (if there user provided a stopAt object (which is not empty))
-            if(customTimeCount.stopAt && !isObjectEmpty(customTimeCount.stopAt)){
-                internalCounterProperties.stopCounterAtMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.stopAt);
-            }
-            else {
-                if(!customTimeCount.direction) {
-                    console.error(ERROR_MESSAGES.ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN);
-                }
-            }
-        }
 
         function checkIfOptionsHasBeenSet() {
             if (!internalCounterProperties.userOptionsProvided) {
                 console.error(ERROR_MESSAGES.ERR_01_OPTIONS_NOT_SET);
             }
         }
-
-        this.start = start;
-        this.setOptions = setOptions;
     }
 
+
+    /**
+     *
+     * @constructor
+     */
+    function CountResult(internalCounterPropertiesRef) {
+        var that = this;
+        var formattedTimeTmp = new FormattedTime();
+
+        function update() {
+            overallMillisecondsLeft = milliseconds;
+            formattedTimeTmp.update(milliseconds);
+            return overallMillisecondsLeft;
+        }
+
+        function getMillisecondsLeft() {
+            return overallMillisecondsLeft;
+        }
+
+        function formattedTime() {
+            return formattedTimeTmp;
+        }
+
+        this.update = update;
+        this.getMillisecondsLeft = getMillisecondsLeft;
+        this.formattedTime = formattedTime;
+    }
+
+    /**
+     * This is a convenience class that wraps some often used time methods for quick access.
+     * @constructor
+     */
+    function FormattedTime() {
+        var millisecondsToConvert = 0;
+        var timeHelper = new TimeHelper();
+
+        function update(milliseconds) {
+            millisecondsToConvert = milliseconds;
+        }
+
+        /**
+         * Returns the Days out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the days calculated from the provided milliseconds left/to go.
+         */
+        function getDays(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.DAYS, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the hours out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the hours calculated from the provided milliseconds left/to go.
+         */
+        function getHours(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.HOURS, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the minutes out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the minutes calculated from the provided milliseconds left/to go.
+         */
+        function getMinutes(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.MINUTES, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the seconds out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the seconds calculated from the provided milliseconds left/to go.
+         */
+        function getSeconds(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.SECONDS, digitsToBeFilled);
+        }
+
+        /**
+         * Returns the milliSeconds out of the CountResult.
+         * @param {Number} [digitsToBeFilled] number of leading digits that will be filled with '0', if the resulting
+         * number is "too short". If not provided, a Number with the "plain" value is returned.
+         * @return {Number|String} the milliSeconds calculated from the provided milliseconds left/to go.
+         */
+        function getMilliSeconds(digitsToBeFilled) {
+            return timeHelper.getDigitFromMsForTimeUnit(millisecondsToConvert, TIME_UNIT.MILLISECONDS, digitsToBeFilled);
+        }
+
+        function toString() {
+            return getDays() + ", " + getHours(2) + ":" + getMinutes(2) + ":" + getSeconds(2) + ":" + getMilliSeconds(3);
+        }
+
+        this.update = update;
+        this.getDays = getDays;
+        this.getHours = getHours;
+        this.getMinutes = getMinutes;
+        this.getSeconds = getSeconds;
+        this.getMilliSeconds = getMilliSeconds;
+        this.toString = toString;
+    }
+
+
+    /**
+     *
+     * @param internalCountPropertiesRef
+     * @constructor
+     */
+    function InternalPropertiesHelper(internalCountPropertiesRef) {
+
+        // fill options with some basic defaults
+        var options = {
+            updateIntervalInMilliseconds: 1000,
+            name: 'untitled'
+        };
+
+        this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesWithOptions(optionsFromUser) {
+            // Update and extend the default options with the user config options
+            extendObjectBy(options, optionsFromUser);
+
+            // Check if there are missing options missing. If so, provide feedback to the user via console.error()
+            checkOptionsAndThrowErrorLogMessagesIfNeeded();
+
+            // The user provided some options, so lets set the corresponding value to the internalCountProperties
+            internalCountPropertiesRef.userOptionsProvided = true;
+            internalCountPropertiesRef.onIntervalCallbackFromUser = optionsFromUser.onInterval || function(){};
+
+            // now that we have a options object, we need to fill some more internalCounterProperties
+            // (because we will do all the calculations based on the internalCounterProperties instead on the options).
+            fillInternalCounterPropertiesFromOptions();
+        };
+
+        /**
+         * Throw some console.error() messages to the user's console if option-properties are not provided
+         */
+        function checkOptionsAndThrowErrorLogMessagesIfNeeded() {
+            // if the onInterval callback is missing
+            !options.onInterval && console.error(ERROR_MESSAGES.ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED);
+        }
+
+
+        function fillInternalCounterPropertiesFromOptions() {
+
+            var isCustomTimeCount = !!options.customTimeCount && !options.dateTimeCount;
+            var isDateTimeCount = !!options.dateTimeCount && !options.customTimeCount;
+
+            if (isCustomTimeCount) {
+                fillInternalCounterPropertiesFromCustomTimeCount(options.customTimeCount);
+            }
+            // counting up to or down to a provided date
+            else if (isDateTimeCount) {
+                console.log("date time");
+            }
+            else {
+                console.error(ERROR_MESSAGES.ERR_02_OPTIONS_COUNT_TYPE_WRONG);
+            }
+        }
+
+
+        function fillInternalCounterPropertiesFromCustomTimeCount(customTimeCount) {
+            // set the startCounterFromMilliseconds at the internalCounterProperties. If nothing is provided from the users options, 0 milliseconds will be used as starting point
+            internalCountPropertiesRef.startCounterFromMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.startFrom || {});
+
+            // set the stopAtMilliseconds at the internalCounterProperties (if there user provided a stopAt object (which is not empty))
+            if (customTimeCount.stopAt && !isObjectEmpty(customTimeCount.stopAt)) {
+                internalCountPropertiesRef.stopCounterAtMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.stopAt);
+            }
+            else {
+                if (!customTimeCount.direction) {
+                    console.error(ERROR_MESSAGES.ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN);
+                }
+            }
+        }
+    }
 
     /**
      * A utility 'class' to extract information from a time value, specified in with milliseconds.
@@ -235,9 +384,11 @@
         return a;
     }
 
-    function isObjectEmpty( o ) {
-        for ( var p in o ) {
-            if ( o.hasOwnProperty( p ) ) { return false; }
+    function isObjectEmpty(o) {
+        for (var p in o) {
+            if (o.hasOwnProperty(p)) {
+                return false;
+            }
         }
         return true;
     }
@@ -259,7 +410,6 @@
             ((timeObject.hours || 0) * 36e5) + // 1000 * 60 * 60
             ((timeObject.days || 0) * 864e5);  // 1000 * 60 * 60 * 24
     }
-
 
 
     /************************************
