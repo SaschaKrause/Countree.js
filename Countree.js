@@ -109,12 +109,18 @@
             onIntervalCallbackFromUser: null
         };
 
-        var internalPropertiesHelper = new InternalPropertiesHelper(internalCounterProperties);
+        // fill options with some basic defaults
+        var options = {
+            updateIntervalInMilliseconds: 1000,
+            name: 'untitled'
+        };
+
+        var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
 
 
         this.state = COUNTER_STATE.NOT_STARTED;
 
-//      update and extend the default options with the user config options (if provided)
+//      update and extend the default options with the user config options (if provided via constructor)
         paramOptions && setOptions(paramOptions);
 
 
@@ -128,7 +134,7 @@
          */
         this.init = function init() {
             checkIfOptionsHasBeenSet();
-            countResult.update();
+            countResult.init();
             internalCounterProperties.onIntervalCallbackFromUser(countResult);
         };
 
@@ -140,6 +146,7 @@
             checkIfOptionsHasBeenSet();
             countResult.update();
             internalCounterProperties.onIntervalCallbackFromUser(countResult);
+            countOnInterval(false);
         };
 
 
@@ -153,6 +160,25 @@
                 console.error(ERROR_MESSAGES.ERR_01_OPTIONS_NOT_SET);
             }
         }
+
+
+        function countWithInterval(resumed) {
+
+            /**
+             * invoked at each interval tick.
+             */
+            function proceedInterval() {
+
+                // update the result and forward it to the users callback as a countResult object
+                countResult.update();
+                // lets invoke the users callback and provide the countResult as parameter
+                internalCounterProperties.onIntervalCallbackFromUser(countResult);
+            }
+
+            // kick of the interval
+            return setInterval(proceedInterval, options.updateIntervalInMilliseconds);
+        }
+
     }
 
 
@@ -164,23 +190,19 @@
         var that = this;
         var formattedTimeTmp = new FormattedTime();
 
-        function update() {
-            overallMillisecondsLeft = milliseconds;
-            formattedTimeTmp.update(milliseconds);
-            return overallMillisecondsLeft;
-        }
+        this.init = function init() {
+            formattedTimeTmp.update(internalCounterPropertiesRef.startCounterFromMilliseconds);
+        };
 
-        function getMillisecondsLeft() {
-            return overallMillisecondsLeft;
-        }
+        this.update = function update() {
+            var calculated = internalCounterPropertiesRef.stopCounterAtMilliseconds - internalCounterPropertiesRef.startCounterFromMilliseconds;
+            formattedTimeTmp.update(calculated);
+        };
 
-        function formattedTime() {
+        this.formattedTime = function formattedTime() {
             return formattedTimeTmp;
-        }
+        };
 
-        this.update = update;
-        this.getMillisecondsLeft = getMillisecondsLeft;
-        this.formattedTime = formattedTime;
     }
 
     /**
@@ -264,13 +286,9 @@
      * @param internalCountPropertiesRef
      * @constructor
      */
-    function InternalPropertiesHelper(internalCountPropertiesRef) {
+    function InternalPropertiesHelper(options, internalCountPropertiesRef) {
 
-        // fill options with some basic defaults
-        var options = {
-            updateIntervalInMilliseconds: 1000,
-            name: 'untitled'
-        };
+
 
         this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesWithOptions(optionsFromUser) {
             // Update and extend the default options with the user config options
@@ -281,7 +299,8 @@
 
             // The user provided some options, so lets set the corresponding value to the internalCountProperties
             internalCountPropertiesRef.userOptionsProvided = true;
-            internalCountPropertiesRef.onIntervalCallbackFromUser = optionsFromUser.onInterval || function(){};
+            internalCountPropertiesRef.onIntervalCallbackFromUser = optionsFromUser.onInterval || function () {
+            };
 
             // now that we have a options object, we need to fill some more internalCounterProperties
             // (because we will do all the calculations based on the internalCounterProperties instead on the options).

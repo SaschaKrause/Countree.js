@@ -36,7 +36,7 @@
 
         var customTimeCounterOption = {
             name: 'my custom time count',
-            updateIntervalInMilliseconds: 10,
+            updateIntervalInMilliseconds: 500,
             customTimeCount: {
                 direction: 'up',
                 startFrom: {
@@ -45,7 +45,9 @@
                     hours: 0,
                     days: 0
                 },
-                stopAt: {}
+                stopAt: {
+                    minutes: 2
+                }
             },
             onInterval: onCountInterval
         };
