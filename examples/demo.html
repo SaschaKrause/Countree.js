@@ -10,6 +10,7 @@
 
 <div id="counter" style="font-size: 20pt">--</div>
 <input type="button" onclick="restart()" value="(re)start">
+<input type="button" onclick="stop()" value="stop">
 
 
 <script type="text/javascript" src="../Countree.js"></script>
@@ -36,11 +37,10 @@
 
         var customTimeCounterOption = {
             name: 'my custom time count',
-            updateIntervalInMilliseconds: 500,
+            updateIntervalInMilliseconds: 1000,
             customTimeCount: {
-                direction: 'up',
                 startFrom: {
-                    minutes: 0,
+                    minutes: 4,
                     seconds: 10,
                     hours: 0,
                     days: 0
@@ -49,6 +49,7 @@
                     minutes: 2
                 }
             },
+            stopWhenFinished: true,
             onInterval: onCountInterval
         };
 
@@ -72,7 +73,10 @@
 
         window.restart = function () {
             counter.start();
+        };
 
+        window.stop = function () {
+            counter.stop();
         };
 
 

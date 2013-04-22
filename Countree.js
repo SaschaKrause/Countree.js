@@ -25,7 +25,7 @@
 
     var ERROR_MESSAGES = {
         ERR_01_OPTIONS_NOT_SET: "ERR-01: Please provide some counter options. You can add them directly add instantiation (e.g. new Countree({})) or after that via countree.setOptions({}). Just make sure that there are options provided before starting the Countree.",
-        ERR_02_OPTIONS_COUNT_TYPE_WRONG: "ERR-02: You need to provide (exactly) one of the following object inside your Countree option configuration: 'customTimeCount:{}' OR 'dateTimeCount:{}'",
+        ERR_02_OPTIONS_COUNT_TYPE_WRONG: "ERR-02: You need to provide one of the following object inside your Countree option configuration: 'customTimeCount:{}' OR 'dateTimeCount:{}'",
         ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN: "ERR-03: You need to specify an 'direction' (with 'up' or 'down') or provide an object to the 'stopAt' property",
         ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED: "ERR-04: No 'onInterval'-callback defined in countree options. This callback is necessary as it will be invoked on counting updates at each interval"
     };
@@ -75,7 +75,7 @@
 
         /**
          * these properties got filled after the users options are evaluated and have always the
-         * @type {{startCounterFromMilliseconds: number, stopCounterAtMilliseconds: number, alreadyPastMilliseconds: number, countingIntervalReference: number}}
+         * @type {{startCounterFromMilliseconds: number, stopCounterAtMilliseconds: number, alreadyPassedMilliseconds: number, countingIntervalReference: number}}
          */
         var internalCounterProperties = {
             /**
@@ -93,7 +93,7 @@
             /**
              *
              */
-            alreadyPastMilliseconds: -1,
+            alreadyPassedMilliseconds: -1,
             /**
              *
              */
@@ -106,7 +106,15 @@
             /**
              *
              */
-            onIntervalCallbackFromUser: null
+            onIntervalCallbackFromUser: null,
+            /**
+             *
+             */
+            countDirection: 'up',
+            /**
+             *
+             */
+            stopWhenFinished: true
         };
 
         // fill options with some basic defaults
@@ -136,6 +144,7 @@
             checkIfOptionsHasBeenSet();
             countResult.init();
             internalCounterProperties.onIntervalCallbackFromUser(countResult);
+            internalCounterProperties.alreadyPassedMilliseconds = 0;
         };
 
         /**
@@ -143,13 +152,25 @@
          * and the newly calculated countResult is provided as parameter.
          */
         this.start = function start() {
-            checkIfOptionsHasBeenSet();
-            countResult.update();
-            internalCounterProperties.onIntervalCallbackFromUser(countResult);
-            countOnInterval(false);
+            // stop to clear the interval (so that only one counting interval is present at a time)
+            this.stop();
+            this.init();
+            countWithInterval(false, new Date());
         };
 
+        /**
+         *
+         */
+        this.stop = function stop() {
+            clearInterval(internalCounterProperties.countingIntervalReference);
+            // indicate that no interval is available anymore.
+            internalCounterProperties.countingIntervalReference = -1;
+        };
 
+        /**
+         *
+         * @param paramOptions
+         */
         this.setOptions = function setOptions(paramOptions) {
             internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions);
         };
@@ -162,21 +183,24 @@
         }
 
 
-        function countWithInterval(resumed) {
+        function countWithInterval(resumed, countStartDate) {
 
             /**
              * invoked at each interval tick.
              */
             function proceedInterval() {
 
-                // update the result and forward it to the users callback as a countResult object
+                console.log(internalCounterProperties.countDirection);
+                //update the passed milliseconds (the current time minus the time that the counter has been started)
+                internalCounterProperties.alreadyPassedMilliseconds = (new Date().getTime() - countStartDate.getTime());
+                // recalculate the countResult based on the updated internalCountProperties
                 countResult.update();
                 // lets invoke the users callback and provide the countResult as parameter
                 internalCounterProperties.onIntervalCallbackFromUser(countResult);
             }
 
             // kick of the interval
-            return setInterval(proceedInterval, options.updateIntervalInMilliseconds);
+            internalCounterProperties.countingIntervalReference = setInterval(proceedInterval, options.updateIntervalInMilliseconds);
         }
 
     }
@@ -186,19 +210,36 @@
      *
      * @constructor
      */
-    function CountResult(internalCounterPropertiesRef) {
+    function CountResult(internalProperties) {
         var that = this;
         var formattedTimeTmp = new FormattedTime();
 
+        /**
+         *
+         */
         this.init = function init() {
-            formattedTimeTmp.update(internalCounterPropertiesRef.startCounterFromMilliseconds);
+            formattedTimeTmp.update(internalProperties.startCounterFromMilliseconds);
         };
 
+        /**
+         *
+         */
         this.update = function update() {
-            var calculated = internalCounterPropertiesRef.stopCounterAtMilliseconds - internalCounterPropertiesRef.startCounterFromMilliseconds;
+            var calculated = 0;
+
+            if (internalProperties.countDirection === "up") {
+                calculated = internalProperties.alreadyPassedMilliseconds + internalProperties.startCounterFromMilliseconds;
+            } else {
+                calculated = internalProperties.startCounterFromMilliseconds - internalProperties.alreadyPassedMilliseconds;
+            }
+
             formattedTimeTmp.update(calculated);
         };
 
+        /**
+         *
+         * @returns {FormattedTime}
+         */
         this.formattedTime = function formattedTime() {
             return formattedTimeTmp;
         };
@@ -289,7 +330,6 @@
     function InternalPropertiesHelper(options, internalCountPropertiesRef) {
 
 
-
         this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesWithOptions(optionsFromUser) {
             // Update and extend the default options with the user config options
             extendObjectBy(options, optionsFromUser);
@@ -341,11 +381,13 @@
             // set the stopAtMilliseconds at the internalCounterProperties (if there user provided a stopAt object (which is not empty))
             if (customTimeCount.stopAt && !isObjectEmpty(customTimeCount.stopAt)) {
                 internalCountPropertiesRef.stopCounterAtMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.stopAt);
+                swapCountDirectionIfNeeded();
             }
-            else {
-                if (!customTimeCount.direction) {
-                    console.error(ERROR_MESSAGES.ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN);
-                }
+        }
+
+        function swapCountDirectionIfNeeded() {
+            if (internalCountPropertiesRef.startCounterFromMilliseconds > internalCountPropertiesRef.stopCounterAtMilliseconds) {
+                internalCountPropertiesRef.countDirection = 'down';
             }
         }
     }
