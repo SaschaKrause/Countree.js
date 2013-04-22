@@ -97,7 +97,7 @@
             /**
              *
              */
-            leftMilliseconds: -1,
+            isFinished: false,
             /**
              * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending or restarting).
              * A counter can only have one interval reference (because a single counter can only create a single interval).
@@ -110,17 +110,15 @@
             /**
              *
              */
-            countDirection: 'up',
-            /**
-             *
-             */
-            stopWhenFinished: true
+            countDirection: 'up'
+
         };
 
         // fill options with some basic defaults
         var options = {
             updateIntervalInMilliseconds: 1000,
-            name: 'untitled'
+            name: 'untitled',
+            stopWhenFinished: true
         };
 
         var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
@@ -155,6 +153,7 @@
             // stop to clear the interval (so that only one counting interval is present at a time)
             this.stop();
             this.init();
+            internalCounterProperties.isFinished = false;
             countWithInterval(false, new Date());
         };
 
@@ -162,9 +161,7 @@
          *
          */
         this.stop = function stop() {
-            clearInterval(internalCounterProperties.countingIntervalReference);
-            // indicate that no interval is available anymore.
-            internalCounterProperties.countingIntervalReference = -1;
+            clearCountingInterval();
         };
 
         /**
@@ -182,6 +179,11 @@
             }
         }
 
+        function clearCountingInterval() {
+            clearInterval(internalCounterProperties.countingIntervalReference);
+            // indicate that no interval is available anymore.
+            internalCounterProperties.countingIntervalReference = -1;
+        }
 
         function countWithInterval(resumed, countStartDate) {
 
@@ -189,14 +191,14 @@
              * invoked at each interval tick.
              */
             function proceedInterval() {
-
-                console.log(internalCounterProperties.countDirection);
                 //update the passed milliseconds (the current time minus the time that the counter has been started)
                 internalCounterProperties.alreadyPassedMilliseconds = (new Date().getTime() - countStartDate.getTime());
                 // recalculate the countResult based on the updated internalCountProperties
                 countResult.update();
                 // lets invoke the users callback and provide the countResult as parameter
                 internalCounterProperties.onIntervalCallbackFromUser(countResult);
+                // check if counter finished. If so - clear the counting interval.
+                internalCounterProperties.isFinished && clearCountingInterval();
             }
 
             // kick of the interval
@@ -210,30 +212,42 @@
      *
      * @constructor
      */
-    function CountResult(internalProperties) {
+    function CountResult(internalPropertiesRef) {
         var that = this;
         var formattedTimeTmp = new FormattedTime();
+
+        var result = 0;
+        var calculatedMillisecondsBasedOnDirection = {
+            'up': function () {
+                result = internalPropertiesRef.startCounterFromMilliseconds + internalPropertiesRef.alreadyPassedMilliseconds;
+                if (internalPropertiesRef.stopWhenFinished && result >= internalPropertiesRef.stopCounterAtMilliseconds) {
+                    internalPropertiesRef.isFinished = true;
+                    result = internalPropertiesRef.stopCounterAtMilliseconds;
+                }
+                return result;
+            },
+            'down': function () {
+                result = internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.alreadyPassedMilliseconds;
+                if (internalPropertiesRef.stopWhenFinished && result <= internalPropertiesRef.stopCounterAtMilliseconds) {
+                    internalPropertiesRef.isFinished = true;
+                    result = internalPropertiesRef.stopCounterAtMilliseconds;
+                }
+                return result;
+            }
+        };
 
         /**
          *
          */
         this.init = function init() {
-            formattedTimeTmp.update(internalProperties.startCounterFromMilliseconds);
+            formattedTimeTmp.update(internalPropertiesRef.startCounterFromMilliseconds);
         };
 
         /**
          *
          */
         this.update = function update() {
-            var calculated = 0;
-
-            if (internalProperties.countDirection === "up") {
-                calculated = internalProperties.alreadyPassedMilliseconds + internalProperties.startCounterFromMilliseconds;
-            } else {
-                calculated = internalProperties.startCounterFromMilliseconds - internalProperties.alreadyPassedMilliseconds;
-            }
-
-            formattedTimeTmp.update(calculated);
+            formattedTimeTmp.update(calculatedMillisecondsBasedOnDirection[internalPropertiesRef.countDirection]());
         };
 
         /**
@@ -339,8 +353,9 @@
 
             // The user provided some options, so lets set the corresponding value to the internalCountProperties
             internalCountPropertiesRef.userOptionsProvided = true;
-            internalCountPropertiesRef.onIntervalCallbackFromUser = optionsFromUser.onInterval || function () {
+            internalCountPropertiesRef.onIntervalCallbackFromUser = options.onInterval || function () {
             };
+            internalCountPropertiesRef.stopWhenFinished = !!options.stopWhenFinished;
 
             // now that we have a options object, we need to fill some more internalCounterProperties
             // (because we will do all the calculations based on the internalCounterProperties instead on the options).
