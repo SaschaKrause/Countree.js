@@ -89,7 +89,7 @@
             /**
              *
              */
-            stopCounterAtMilliseconds: -1,
+            stopCounterAtMilliseconds: null,
             /**
              *
              */
@@ -118,7 +118,7 @@
         var options = {
             updateIntervalInMilliseconds: 1000,
             name: 'untitled',
-            stopWhenFinished: true
+            stopWhenFinished: false
         };
 
         var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
@@ -150,7 +150,7 @@
          * and the newly calculated countResult is provided as parameter.
          */
         this.start = function start() {
-            // stop to clear the interval (so that only one counting interval is present at a time)
+            // stop to clear the interval (so that ONLY ONE COUNTING INTERVAL is present at a time)
             this.stop();
             this.init();
             internalCounterProperties.isFinished = false;
@@ -220,7 +220,12 @@
         var calculatedMillisecondsBasedOnDirection = {
             'up': function () {
                 result = internalPropertiesRef.startCounterFromMilliseconds + internalPropertiesRef.alreadyPassedMilliseconds;
-                if (internalPropertiesRef.stopWhenFinished && result >= internalPropertiesRef.stopCounterAtMilliseconds) {
+
+                // check if counter should be stopped
+                if (internalPropertiesRef.stopWhenFinished
+                    && internalPropertiesRef.stopCounterAtMilliseconds != null
+                    && result >= internalPropertiesRef.stopCounterAtMilliseconds) {
+
                     internalPropertiesRef.isFinished = true;
                     result = internalPropertiesRef.stopCounterAtMilliseconds;
                 }
@@ -228,7 +233,12 @@
             },
             'down': function () {
                 result = internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.alreadyPassedMilliseconds;
-                if (internalPropertiesRef.stopWhenFinished && result <= internalPropertiesRef.stopCounterAtMilliseconds) {
+
+                // check if counter should be stopped
+                if (internalPropertiesRef.stopWhenFinished
+                    && internalPropertiesRef.stopCounterAtMilliseconds != null
+                    && result <= internalPropertiesRef.stopCounterAtMilliseconds) {
+
                     internalPropertiesRef.isFinished = true;
                     result = internalPropertiesRef.stopCounterAtMilliseconds;
                 }
@@ -353,9 +363,9 @@
 
             // The user provided some options, so lets set the corresponding value to the internalCountProperties
             internalCountPropertiesRef.userOptionsProvided = true;
+            internalCountPropertiesRef.stopWhenFinished = !!options.stopWhenFinished;
             internalCountPropertiesRef.onIntervalCallbackFromUser = options.onInterval || function () {
             };
-            internalCountPropertiesRef.stopWhenFinished = !!options.stopWhenFinished;
 
             // now that we have a options object, we need to fill some more internalCounterProperties
             // (because we will do all the calculations based on the internalCounterProperties instead on the options).

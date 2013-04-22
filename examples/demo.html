@@ -40,15 +40,16 @@
             updateIntervalInMilliseconds: 1000,
             customTimeCount: {
                 startFrom: {
-                    minutes: 2,
-                    seconds: 5,
+                    minutes: 0,
+                    seconds: 15,
                     hours: 0,
                     days: 0
                 },
                 stopAt: {
-                    minutes: 2
+                    seconds: 30
                 }
             },
+            stopWhenFinished: true,
             onInterval: onCountInterval
         };
 
