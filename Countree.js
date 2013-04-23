@@ -1,6 +1,6 @@
 /*
  * Countree
- * https://github.com/SaschaKrause/Countree
+ * https://github.com/SaschaKrause/Countree.js
  *
  * Copyright (c) 2013 Sascha Krause
  * Licensed under the MIT license.
@@ -25,7 +25,7 @@
 
     var ERROR_MESSAGES = {
         ERR_01_OPTIONS_NOT_SET: "ERR-01: Please provide some counter options. You can add them directly add instantiation (e.g. new Countree({})) or after that via countree.setOptions({}). Just make sure that there are options provided before starting the Countree.",
-        ERR_02_OPTIONS_COUNT_TYPE_WRONG: "ERR-02: You need to provide one of the following object inside your Countree option configuration: 'customTimeCount:{}' OR 'dateTimeCount:{}'",
+        ERR_02_OPTIONS_COUNT_TYPE_WRONG: "ERR-02: You need to provide one of the following object inside your Countree option configuration: 'customTime:{}' OR 'dateTime:{}'",
         ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN: "ERR-03: You need to specify an 'direction' (with 'up' or 'down') or provide an object to the 'stopAt' property",
         ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED: "ERR-04: No 'onInterval'-callback defined in countree options. This callback is necessary as it will be invoked on counting updates at each interval"
     };
@@ -43,41 +43,14 @@
         this.version = '0.0.1';
 
         /**
-         * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending
-         * or restarting).
-         * A counter can only have one interval reference (because a single counter can only create a single interval).
-         * @type {Number}
-         */
-
-        /**
-         * The milliseconds left/to go (depends if counting up or down) to count from/to when resuming the counter after
-         * it is suspended.
-         * @type {Number}
-         */
-        var millisecondsForContinuePoint = 0;
-
-        /**
-         *
-         */
-        var countingCallbackFromUser = {
-            value: undefined,
-            set: function (val) {
-                this.value = val;
-            },
-            get: function () {
-                return this.value;
-            },
-            invoke: function (param) {
-                this.value(param);
-            }
-
-        };
-
-        /**
          * these properties got filled after the users options are evaluated and have always the
-         * @type {{startCounterFromMilliseconds: number, stopCounterAtMilliseconds: number, alreadyPassedMilliseconds: number, countingIntervalReference: number}}
+         * @type {Object}
          */
         var internalCounterProperties = {
+            /**
+             *
+             */
+            nowAsDate: null,
             /**
              *  This should be true after the users options has been set.
              */
@@ -85,7 +58,7 @@
             /**
              *
              */
-            startCounterFromMilliseconds: -1,
+            startCounterFromMilliseconds: null,
             /**
              *
              */
@@ -110,8 +83,11 @@
             /**
              *
              */
-            countDirection: 'up'
-
+            countDirection: 'up',
+            /**
+             *
+             */
+            countToDate: null
         };
 
         // fill options with some basic defaults
@@ -127,7 +103,7 @@
         this.state = COUNTER_STATE.NOT_STARTED;
 
 //      update and extend the default options with the user config options (if provided via constructor)
-        paramOptions && setOptions(paramOptions);
+        paramOptions && this.setOptions(paramOptions);
 
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
@@ -191,8 +167,10 @@
              * invoked at each interval tick.
              */
             function proceedInterval() {
+                var now = new Date();
                 //update the passed milliseconds (the current time minus the time that the counter has been started)
-                internalCounterProperties.alreadyPassedMilliseconds = (new Date().getTime() - countStartDate.getTime());
+                internalCounterProperties.alreadyPassedMilliseconds = (now.getTime() - countStartDate.getTime());
+                internalCounterProperties.nowAsDate = now;
                 // recalculate the countResult based on the updated internalCountProperties
                 countResult.update();
                 // lets invoke the users callback and provide the countResult as parameter
@@ -213,38 +191,7 @@
      * @constructor
      */
     function CountResult(internalPropertiesRef) {
-        var that = this;
         var formattedTimeTmp = new FormattedTime();
-
-        var result = 0;
-        var calculatedMillisecondsBasedOnDirection = {
-            'up': function () {
-                result = internalPropertiesRef.startCounterFromMilliseconds + internalPropertiesRef.alreadyPassedMilliseconds;
-
-                // check if counter should be stopped
-                if (internalPropertiesRef.stopWhenFinished
-                    && internalPropertiesRef.stopCounterAtMilliseconds != null
-                    && result >= internalPropertiesRef.stopCounterAtMilliseconds) {
-
-                    internalPropertiesRef.isFinished = true;
-                    result = internalPropertiesRef.stopCounterAtMilliseconds;
-                }
-                return result;
-            },
-            'down': function () {
-                result = internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.alreadyPassedMilliseconds;
-
-                // check if counter should be stopped
-                if (internalPropertiesRef.stopWhenFinished
-                    && internalPropertiesRef.stopCounterAtMilliseconds != null
-                    && result <= internalPropertiesRef.stopCounterAtMilliseconds) {
-
-                    internalPropertiesRef.isFinished = true;
-                    result = internalPropertiesRef.stopCounterAtMilliseconds;
-                }
-                return result;
-            }
-        };
 
         /**
          *
@@ -257,7 +204,7 @@
          *
          */
         this.update = function update() {
-            formattedTimeTmp.update(calculatedMillisecondsBasedOnDirection[internalPropertiesRef.countDirection]());
+            formattedTimeTmp.update(calculateResultAndUpdateInternalProperties(internalPropertiesRef.countDirection));
         };
 
         /**
@@ -268,7 +215,50 @@
             return formattedTimeTmp;
         };
 
+
+        function calculateResultAndUpdateInternalProperties(direction) {
+            var result = 0;
+            var counterShouldStop = internalPropertiesRef.stopWhenFinished && internalPropertiesRef.stopCounterAtMilliseconds != null;
+
+            // when counting up (and only when the startCounterFromMilliseconds property is set - which is the case when the "customTime" option is provided)
+            if (direction === 'up' && internalPropertiesRef.startCounterFromMilliseconds) {
+                result = internalPropertiesRef.startCounterFromMilliseconds + internalPropertiesRef.alreadyPassedMilliseconds;
+
+                // check if counter should be stopped
+                if (counterShouldStop && result >= internalPropertiesRef.stopCounterAtMilliseconds) {
+
+                    internalPropertiesRef.isFinished = true;
+                    result = internalPropertiesRef.stopCounterAtMilliseconds;
+                }
+            }
+            // when counting down (and only when the startCounterFromMilliseconds property is set - which is the case when the "customTime" option is provided)
+            else if (direction === 'down' && internalPropertiesRef.startCounterFromMilliseconds) {
+                result = internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.alreadyPassedMilliseconds;
+
+                // check if counter should be stopped
+                if (counterShouldStop && result <= internalPropertiesRef.stopCounterAtMilliseconds) {
+
+                    internalPropertiesRef.isFinished = true;
+                    result = internalPropertiesRef.stopCounterAtMilliseconds;
+                }
+            }
+            // when counting towards a given date
+            else if (internalPropertiesRef.nowAsDate) {
+                var now = internalPropertiesRef.nowAsDate.getTime();
+                var countTo = internalPropertiesRef.countToDate.getTime();
+
+                // if now is "after" the date to count to
+                if(now > countTo) {
+                    result =  now - countTo;
+                }
+                else {
+                    result = countTo - now;
+                }
+            }
+            return result;
+        }
     }
+
 
     /**
      * This is a convenience class that wraps some often used time methods for quick access.
@@ -383,15 +373,15 @@
 
         function fillInternalCounterPropertiesFromOptions() {
 
-            var isCustomTimeCount = !!options.customTimeCount && !options.dateTimeCount;
-            var isDateTimeCount = !!options.dateTimeCount && !options.customTimeCount;
+            var isCustomTime = !!options.customTime && !options.dateTime;
+            var isDateTime = !!options.dateTime && !options.customTime;
 
-            if (isCustomTimeCount) {
-                fillInternalCounterPropertiesFromCustomTimeCount(options.customTimeCount);
+            if (isCustomTime) {
+                fillFromCustomTime(options.customTime);
             }
             // counting up to or down to a provided date
-            else if (isDateTimeCount) {
-                console.log("date time");
+            else if (isDateTime) {
+                fillFromDateTime(options.dateTime.date);
             }
             else {
                 console.error(ERROR_MESSAGES.ERR_02_OPTIONS_COUNT_TYPE_WRONG);
@@ -399,15 +389,20 @@
         }
 
 
-        function fillInternalCounterPropertiesFromCustomTimeCount(customTimeCount) {
+        function fillFromCustomTime(customTime) {
             // set the startCounterFromMilliseconds at the internalCounterProperties. If nothing is provided from the users options, 0 milliseconds will be used as starting point
-            internalCountPropertiesRef.startCounterFromMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.startFrom || {});
+            internalCountPropertiesRef.startCounterFromMilliseconds = getTotalMillisecondsFromTimeObject(customTime.startFrom || {});
 
-            // set the stopAtMilliseconds at the internalCounterProperties (if there user provided a stopAt object (which is not empty))
-            if (customTimeCount.stopAt && !isObjectEmpty(customTimeCount.stopAt)) {
-                internalCountPropertiesRef.stopCounterAtMilliseconds = getTotalMillisecondsFromTimeObject(customTimeCount.stopAt);
+            // set the stopAtMilliseconds at the internalCounterProperties (if there user provided a stopAt object (which has do be not empty))
+            if (customTime.stopAt && !isObjectEmpty(customTime.stopAt)) {
+                internalCountPropertiesRef.stopCounterAtMilliseconds = getTotalMillisecondsFromTimeObject(customTime.stopAt);
                 swapCountDirectionIfNeeded();
             }
+        }
+
+        function fillFromDateTime(dateTime) {
+            console.log(dateTime);
+            internalCountPropertiesRef.countToDate = dateTime;
         }
 
         function swapCountDirectionIfNeeded() {

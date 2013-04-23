@@ -35,13 +35,14 @@
 */
 
 
+
         var customTimeCounterOption = {
             name: 'my custom time count',
-            updateIntervalInMilliseconds: 1000,
-            customTimeCount: {
+            updateIntervalInMilliseconds: 500,
+            customTime: {
                 startFrom: {
                     minutes: 0,
-                    seconds: 15,
+                    seconds: 25,
                     hours: 0,
                     days: 0
                 },
@@ -56,17 +57,18 @@
 
         var dateCounterOption = {
             name: 'my date time count',
-            updateIntervalInMilliseconds: 10,
-            dateTimeCount: {
-                date: new Date(2013, 3, 17, 21, 29)
+            updateIntervalInMilliseconds: 500,
+            dateTime: {
+                date: new Date(2013, 3, 24, 22, 09,30)
             },
             onInterval: onCountInterval
         };
 
 
 
+
         var counter = new Countree();
-        counter.setOptions(customTimeCounterOption);
+        counter.setOptions(dateCounterOption);
 
         counter.init();
 
