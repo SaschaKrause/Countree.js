@@ -40,6 +40,11 @@ module.exports = function (grunt) {
             tasks: 'lint test'
         },
         jshint: {
+            files: [
+                'grunt.js',
+                'Countree.js',
+                'test/**/*.js'
+            ],
             options: {
                 curly: true,
                 eqeqeq: true,
@@ -48,11 +53,12 @@ module.exports = function (grunt) {
                 newcap: true,
                 noarg: true,
                 sub: true,
-                undef: true,
+                undef: false,
                 boss: true,
                 eqnull: true,
                 browser: true,
-                evil: false
+                evil: false ,
+                expr: true
             },
             globals: {
                 exports: true,
