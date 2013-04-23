@@ -75,7 +75,7 @@
              * The interval reference is used to identify the active interval, so that it could be cleared (e.g. for suspending or restarting).
              * A counter can only have one interval reference (because a single counter can only create a single interval).
              */
-            countingIntervalReference: -1,
+            countingIntervalReference: null,
             /**
              *
              */
@@ -126,18 +126,28 @@
          * and the newly calculated countResult is provided as parameter.
          */
         this.start = function start() {
-            // stop to clear the interval (so that ONLY ONE COUNTING INTERVAL is present at a time)
-            this.stop();
+            // suspend to clear the interval (so that ONLY ONE COUNTING INTERVAL is present at a time)
+            this.suspend();
             this.init();
             internalCounterProperties.isFinished = false;
-            countWithInterval(false, new Date());
+            countWithInterval(new Date(), false);
         };
 
         /**
-         *
+         * Suspend this counter by clearing the counting interval.
          */
-        this.stop = function stop() {
+        this.suspend = function suspend() {
             clearCountingInterval();
+        };
+
+        /**
+         * Resume this counter. This will only have an effect when the counter has been initialized AND the counter is
+         * currently not counting.
+         */
+        this.resume = function resume() {
+            if(!internalCounterProperties.countingIntervalReference){
+                countWithInterval(new Date(), true);
+            }
         };
 
         /**
@@ -158,18 +168,22 @@
         function clearCountingInterval() {
             clearInterval(internalCounterProperties.countingIntervalReference);
             // indicate that no interval is available anymore.
-            internalCounterProperties.countingIntervalReference = -1;
+            internalCounterProperties.countingIntervalReference = null;
         }
 
-        function countWithInterval(resumed, countStartDate) {
+        function countWithInterval(countStartDate, resumed) {
+
+            // if the counter has been resumed, we need to add a time offset to the alreadyPassedMilliseconds
+            var timeToAddWhenResumed = resumed ? internalCounterProperties.alreadyPassedMilliseconds : 0;
 
             /**
              * invoked at each interval tick.
              */
             function proceedInterval() {
                 var now = new Date();
-                //update the passed milliseconds (the current time minus the time that the counter has been started)
-                internalCounterProperties.alreadyPassedMilliseconds = (now.getTime() - countStartDate.getTime());
+                // update the passed milliseconds. These will only be used to calculate the countResult when counting from the "customTime" option
+                internalCounterProperties.alreadyPassedMilliseconds = (now.getTime() - countStartDate.getTime()) + timeToAddWhenResumed;
+                // the nowAsDate property will only be used to calculate the countResult when counting towards the "dateTime" option
                 internalCounterProperties.nowAsDate = now;
                 // recalculate the countResult based on the updated internalCountProperties
                 countResult.update();
@@ -221,7 +235,7 @@
             var counterShouldStop = internalPropertiesRef.stopWhenFinished && internalPropertiesRef.stopCounterAtMilliseconds != null;
 
             // when counting up (and only when the startCounterFromMilliseconds property is set - which is the case when the "customTime" option is provided)
-            if (direction === 'up' && internalPropertiesRef.startCounterFromMilliseconds) {
+            if (direction === 'up' && internalPropertiesRef.startCounterFromMilliseconds != null) {
                 result = internalPropertiesRef.startCounterFromMilliseconds + internalPropertiesRef.alreadyPassedMilliseconds;
 
                 // check if counter should be stopped
@@ -232,7 +246,7 @@
                 }
             }
             // when counting down (and only when the startCounterFromMilliseconds property is set - which is the case when the "customTime" option is provided)
-            else if (direction === 'down' && internalPropertiesRef.startCounterFromMilliseconds) {
+            else if (direction === 'down' && internalPropertiesRef.startCounterFromMilliseconds != null) {
                 result = internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.alreadyPassedMilliseconds;
 
                 // check if counter should be stopped
@@ -243,7 +257,7 @@
                 }
             }
             // when counting towards a given date
-            else if (internalPropertiesRef.nowAsDate) {
+            else if (internalPropertiesRef.countToDate) {
                 var now = internalPropertiesRef.nowAsDate.getTime();
                 var countTo = internalPropertiesRef.countToDate.getTime();
 
