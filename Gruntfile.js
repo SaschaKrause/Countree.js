@@ -46,19 +46,7 @@ module.exports = function (grunt) {
                 'test/**/*.js'
             ],
             options: {
-                curly: true,
-                eqeqeq: true,
-                immed: true,
-                latedef: true,
-                newcap: true,
-                noarg: true,
-                sub: true,
-                undef: false,
-                boss: true,
-                eqnull: true,
-                browser: true,
-                evil: false ,
-                expr: true
+                jshintrc: '.jshintrc'
             },
             globals: {
                 exports: true,

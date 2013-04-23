@@ -7,7 +7,6 @@
  */
 
 (function (exports) {
-
     /** @constant */
     var TIME_UNIT = {
         MILLISECONDS: 'ms',
@@ -107,8 +106,8 @@
 
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
-        // This result will be provided as parameter to the users interval callback
-        var countResult = new CountResult(internalCounterProperties);
+        // This result will be provided as parameter to the users interval callback (which is invoked at each interval tick).
+        var countResult = new CountResult(this, internalCounterProperties);
 
         /**
          * Init the countree by calling the user's onInterval-callback ONCE without starting the counter.
@@ -145,7 +144,7 @@
          * currently not counting.
          */
         this.resume = function resume() {
-            if(!internalCounterProperties.countingIntervalReference){
+            if (!internalCounterProperties.countingIntervalReference) {
                 countWithInterval(new Date(), true);
             }
         };
@@ -158,6 +157,10 @@
             internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions);
         };
 
+
+        this.notifyAt = function notifyAt(notifyConfig, callback) {
+            countResult.countNotifier.addNotifier(notifyConfig, callback);
+        };
 
         function checkIfOptionsHasBeenSet() {
             if (!internalCounterProperties.userOptionsProvided) {
@@ -204,8 +207,10 @@
      *
      * @constructor
      */
-    function CountResult(internalPropertiesRef) {
+    function CountResult(countreeRef, internalPropertiesRef) {
         var formattedTimeTmp = new FormattedTime();
+
+        this.countNotifier = new CountNotifier(countreeRef, internalPropertiesRef);
 
         /**
          *
@@ -262,8 +267,8 @@
                 var countTo = internalPropertiesRef.countToDate.getTime();
 
                 // if now is "after" the date to count to
-                if(now > countTo) {
-                    result =  now - countTo;
+                if (now > countTo) {
+                    result = now - countTo;
                 }
                 else {
                     result = countTo - now;
@@ -273,6 +278,31 @@
         }
     }
 
+    function CountNotifier(countreeRef, millisecondsStartingPoint) {
+        var notifyAtTimeArray = [];
+        var notifyAtEventArray = [];
+
+        this.millisecondsStartingPoint = millisecondsStartingPoint;
+        this.countreeReference = countreeRef;
+
+        var WHEN = {
+            BEFORE_END: 'beforeEnd',
+            AFTER_START: 'afterStart'
+        };
+
+        this.EVENT = {
+            ON_INIT: 'onInit',
+            ON_START: 'onStart',
+            ON_FINISH: 'onFinish',
+            ON_RESUME: 'onResume',
+            ON_SUSPEND: 'onSuspend',
+            ON_RESET: 'onReset'
+        };
+
+        this.addNotifier = function addNotifier(notifyConfig, callback) {
+            callback();
+        };
+    }
 
     /**
      * This is a convenience class that wraps some often used time methods for quick access.
@@ -352,6 +382,7 @@
 
     /**
      *
+     * @param options
      * @param internalCountPropertiesRef
      * @constructor
      */

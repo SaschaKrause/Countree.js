@@ -60,7 +60,7 @@
             name: 'my date time count',
             updateIntervalInMilliseconds: 500,
             dateTime: {
-                date: new Date(2013, 3, 24, 22, 09,30)
+                date: new Date(2013, 3, 24, 22, 9,30)
             },
             onInterval: onCountInterval
         };
@@ -69,8 +69,8 @@
 
 
         var counter = new Countree();
-        counter.setOptions(dateCounterOption);
-
+        counter.setOptions(customTimeCounterOption);
+        counter.notifyAt({meins:"asdf"}, onNotify);
         counter.init();
 
 
@@ -91,6 +91,9 @@
            console.log("user callback: , " + countResult.formattedTime().toString());
         }
 
+        function onNotify(countreeRef){
+            console.log("notified for countree: " + countreeRef);
+        }
     })();
 </script>
 
