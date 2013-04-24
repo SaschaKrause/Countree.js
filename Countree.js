@@ -102,7 +102,7 @@
         this.state = COUNTER_STATE.NOT_STARTED;
 
 //      update and extend the default options with the user config options (if provided via constructor)
-        paramOptions && this.setOptions(paramOptions);
+        paramOptions && setOptions(paramOptions);
 
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
@@ -153,9 +153,11 @@
          *
          * @param paramOptions
          */
-        this.setOptions = function setOptions(paramOptions) {
+        function setOptions(paramOptions) {
             internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions);
-        };
+        }
+
+        this.setOptions = setOptions;
 
 
         this.notifyAt = function notifyAt(notifyConfig, callback) {
@@ -210,20 +212,23 @@
     function CountResult(countreeRef, internalPropertiesRef) {
         var formattedTimeTmp = new FormattedTime();
 
+        this.calculatedMilliseconds = 0;
         this.countNotifier = new CountNotifier(countreeRef, internalPropertiesRef);
 
         /**
          *
          */
         this.init = function init() {
-            formattedTimeTmp.update(internalPropertiesRef.startCounterFromMilliseconds);
+            this.calculatedMilliseconds = internalPropertiesRef.startCounterFromMilliseconds;
+            formattedTimeTmp.update(this.calculatedMilliseconds);
         };
 
         /**
          *
          */
         this.update = function update() {
-            formattedTimeTmp.update(calculateResultAndUpdateInternalProperties(internalPropertiesRef.countDirection));
+            this.calculatedMilliseconds = calculateResultAndUpdateInternalProperties(internalPropertiesRef.countDirection);
+            formattedTimeTmp.update(this.calculatedMilliseconds);
         };
 
         /**

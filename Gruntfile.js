@@ -28,13 +28,6 @@ module.exports = function (grunt) {
         nodeunit: {
             files: ['test/**/*.js']
         },
-        lint: {
-            files: [
-                'grunt.js',
-                'Countree.js',
-                'test/**/*.js'
-            ]
-        },
         watch: {
             files: '<config:lint.files>',
             tasks: 'lint test'
@@ -42,8 +35,7 @@ module.exports = function (grunt) {
         jshint: {
             files: [
                 'grunt.js',
-                'Countree.js',
-                'test/**/*.js'
+                'Countree.js'
             ],
             options: {
                 jshintrc: '.jshintrc'
