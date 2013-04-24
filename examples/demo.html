@@ -51,8 +51,8 @@
                     seconds: 0
                 }
             },
-            stopWhenFinished: true,
-            onInterval: onCountInterval
+            stopWhenFinished: true
+
         };
 
 
@@ -70,9 +70,10 @@
 
         var counter = new Countree();
         counter.setOptions(customTimeCounterOption);
+        counter.setIntervalCallback(onCountInterval);
         counter.notifyAt({event:"onStart"}, onStart);
         counter.notifyAt({event:"onFinish"}, onFinish);
-//        counter.init();
+        counter.init();
 
 
         window.restart = function () {

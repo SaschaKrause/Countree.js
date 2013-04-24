@@ -23,10 +23,10 @@
     };
 
     var ERROR_MESSAGES = {
-        ERR_01_OPTIONS_NOT_SET: "ERR-01: Please provide some counter options. You can add them directly add instantiation (e.g. new Countree({})) or after that via countree.setOptions({}). Just make sure that there are options provided before starting the Countree.",
-        ERR_02_OPTIONS_COUNT_TYPE_WRONG: "ERR-02: You need to provide one of the following object inside your Countree option configuration: 'customTime:{}' OR 'dateTime:{}'",
-        ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN: "ERR-03: You need to specify an 'direction' (with 'up' or 'down') or provide an object to the 'stopAt' property",
-        ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED: "ERR-04: No 'onInterval'-callback defined in countree options. This callback is necessary as it will be invoked on counting updates at each interval"
+        ERR_01_OPTIONS_NOT_SET: "COUNTREE-ERR-01: Please provide some counter options. You can add them directly add instantiation (e.g. new Countree({})) or after that via countree.setOptions({}). Just make sure that there are options provided before starting the Countree.",
+        ERR_02_OPTIONS_COUNT_TYPE_WRONG: "COUNTREE-ERR-02: You need to provide one of the following object inside your Countree option configuration: 'customTime:{}' OR 'dateTime:{}'",
+        ERR_03_OPTIONS_CUSTOM_COUNT_DIRECTION_UNKNOWN: "COUNTREE-ERR-03: You need to specify an 'direction' (with 'up' or 'down') or provide an object to the 'stopAt' property",
+        ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED: "COUNTREE-ERR-04: No 'onInterval'-callback defined in countree options. This callback is necessary as it will be invoked on counting updates at each interval"
     };
 
 
@@ -101,7 +101,12 @@
         this.state = COUNTER_STATE.NOT_STARTED;
 
         this.setOptions = function setOptions(paramOptions) {
-            internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions, that);
+            // Update and extend the default options with the user config options
+            extendObjectBy(options, paramOptions);
+        };
+
+        this.setIntervalCallback = function setIntervalCallback(onInterval) {
+            options.onInterval = onInterval;
         };
 
 //      update and extend the default options with the user config options (if provided via constructor)
@@ -117,6 +122,7 @@
          * This is great for updating the view with the calculated starting milliseconds.
          */
         this.init = function init() {
+            internalPropertiesHelper.updateInternalCountPropertiesFromOptions(that);
             checkIfOptionsHasBeenSet();
             countResult.init();
             internalCounterProperties.onIntervalCallbackFromUser(countResult);
@@ -192,7 +198,7 @@
                 // lets invoke the users callback and provide the countResult as parameter
                 internalCounterProperties.onIntervalCallbackFromUser(countResult);
                 // check if counter finished. If so - clear the counting interval.
-                if(internalCounterProperties.isFinished){
+                if (internalCounterProperties.isFinished) {
                     clearCountingInterval();
                     countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_FINISH);
                 }
@@ -333,7 +339,7 @@
          * @param event the fired event name
          * @param milliseconds the milliseconds at the counting time at which the event has been fired
          */
-        this.fireNotificationEvent  = function fireNotificationEvent(event, milliseconds) {
+        this.fireNotificationEvent = function fireNotificationEvent(event, milliseconds) {
             for (var i = 0; i < notifyAtEventArray.length; ++i) {
                 if (notifyAtEventArray[i].event === event) {
                     notifyAtEventArray[i].callback(countreeRef, milliseconds);
@@ -427,9 +433,7 @@
     function InternalPropertiesHelper(options, internalCountPropertiesRef) {
 
 
-        this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesWithOptions(optionsFromUser, countreeRef) {
-            // Update and extend the default options with the user config options
-            extendObjectBy(options, optionsFromUser);
+        this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesFromOptions(countreeRef) {
 
             countreeRef.name = options.name;
 
