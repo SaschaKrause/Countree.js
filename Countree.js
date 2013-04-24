@@ -326,7 +326,7 @@
             for (var i = 0; i < notifyAtEventArray.length; ++i) {
                 notifyAtEventArray[i].alreadyFired = false;
             }
-        }
+        };
 
         /**
          * Fire events and invoke the callbacks if there are any registered.
@@ -339,7 +339,7 @@
                     notifyAtEventArray[i].callback(countreeRef, milliseconds);
                 }
             }
-        }
+        };
     }
 
     /**

@@ -98,11 +98,14 @@
 
         var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
 
-
         this.state = COUNTER_STATE.NOT_STARTED;
 
+        this.setOptions = function setOptions(paramOptions) {
+            internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions, that);
+        };
+
 //      update and extend the default options with the user config options (if provided via constructor)
-        paramOptions && setOptions(paramOptions);
+        paramOptions && this.setOptions(paramOptions);
 
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
@@ -118,6 +121,7 @@
             countResult.init();
             internalCounterProperties.onIntervalCallbackFromUser(countResult);
             internalCounterProperties.alreadyPassedMilliseconds = 0;
+            countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_INIT);
         };
 
         /**
@@ -125,8 +129,9 @@
          * and the newly calculated countResult is provided as parameter.
          */
         this.start = function start() {
-            // suspend to clear the interval (so that ONLY ONE COUNTING INTERVAL is present at a time)
-            this.suspend();
+            // clear the interval (so that ONLY ONE COUNTING INTERVAL is present at a time - even if this method is invoked more than once)
+            clearCountingInterval();
+            countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_START);
             this.init();
             internalCounterProperties.isFinished = false;
             countWithInterval(new Date(), false);
@@ -137,6 +142,7 @@
          */
         this.suspend = function suspend() {
             clearCountingInterval();
+            countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_SUSPEND);
         };
 
         /**
@@ -145,19 +151,10 @@
          */
         this.resume = function resume() {
             if (!internalCounterProperties.countingIntervalReference) {
+                countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_RESUME);
                 countWithInterval(new Date(), true);
             }
         };
-
-        /**
-         *
-         * @param paramOptions
-         */
-        function setOptions(paramOptions) {
-            internalPropertiesHelper.updateInternalCountPropertiesFromOptions(paramOptions);
-        }
-
-        this.setOptions = setOptions;
 
 
         this.notifyAt = function notifyAt(notifyConfig, callback) {
@@ -195,7 +192,10 @@
                 // lets invoke the users callback and provide the countResult as parameter
                 internalCounterProperties.onIntervalCallbackFromUser(countResult);
                 // check if counter finished. If so - clear the counting interval.
-                internalCounterProperties.isFinished && clearCountingInterval();
+                if(internalCounterProperties.isFinished){
+                    clearCountingInterval();
+                    countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_FINISH);
+                }
             }
 
             // kick of the interval
@@ -211,7 +211,7 @@
      */
     function CountResult(countreeRef, internalPropertiesRef) {
         var formattedTimeTmp = new FormattedTime();
-
+        var that = this;
         this.calculatedMilliseconds = 0;
         this.countNotifier = new CountNotifier(countreeRef, internalPropertiesRef);
 
@@ -250,7 +250,6 @@
 
                 // check if counter should be stopped
                 if (counterShouldStop && result >= internalPropertiesRef.stopCounterAtMilliseconds) {
-
                     internalPropertiesRef.isFinished = true;
                     result = internalPropertiesRef.stopCounterAtMilliseconds;
                 }
@@ -261,7 +260,6 @@
 
                 // check if counter should be stopped
                 if (counterShouldStop && result <= internalPropertiesRef.stopCounterAtMilliseconds) {
-
                     internalPropertiesRef.isFinished = true;
                     result = internalPropertiesRef.stopCounterAtMilliseconds;
                 }
@@ -304,8 +302,43 @@
             ON_RESET: 'onReset'
         };
 
+
+        /**
+         * Add a notifier to the CountResult which will invoke the callback when the millisecondsToNotify are reached while counting (notifier will be added to the notifyAtArray property).
+         * @param notifyConfig the config which the milliseconds are calculated from (used to get the time at which the
+         * callback should be triggered)
+         * @param callback triggered when the millisecondsToNotify are reached when counting
+         */
         this.addNotifier = function addNotifier(notifyConfig, callback) {
-            callback();
+
+            if (notifyConfig.event) {
+                notifyAtEventArray.push({
+                    event: notifyConfig.event,
+                    callback: callback
+                });
+            }
+        };
+
+        /**
+         * Resets the notifier so that it is able to fire again when needed.
+         */
+        this.resetNotifier = function resetNotifier() {
+            for (var i = 0; i < notifyAtEventArray.length; ++i) {
+                notifyAtEventArray[i].alreadyFired = false;
+            }
+        };
+
+        /**
+         * Fire events and invoke the callbacks if there are any registered.
+         * @param event the fired event name
+         * @param milliseconds the milliseconds at the counting time at which the event has been fired
+         */
+        this.fireNotificationEvent  = function fireNotificationEvent(event, milliseconds) {
+            for (var i = 0; i < notifyAtEventArray.length; ++i) {
+                if (notifyAtEventArray[i].event === event) {
+                    notifyAtEventArray[i].callback(countreeRef, milliseconds);
+                }
+            }
         };
     }
 
@@ -394,9 +427,11 @@
     function InternalPropertiesHelper(options, internalCountPropertiesRef) {
 
 
-        this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesWithOptions(optionsFromUser) {
+        this.updateInternalCountPropertiesFromOptions = function updateInternalCountPropertiesWithOptions(optionsFromUser, countreeRef) {
             // Update and extend the default options with the user config options
             extendObjectBy(options, optionsFromUser);
+
+            countreeRef.name = options.name;
 
             // Check if there are missing options missing. If so, provide feedback to the user via console.error()
             checkOptionsAndThrowErrorLogMessagesIfNeeded();
