@@ -43,7 +43,7 @@
             customTime: {
                 startFrom: {
                     minutes: 0,
-                    seconds: 410,
+                    seconds: 3,
                     hours: 0,
                     days: 0
                 },
@@ -68,10 +68,11 @@
 
 
 
-        var counter = new Countree(customTimeCounterOption);
-//        counter.setOptions(customTimeCounterOption);
-        counter.notifyAt({meins:"asdf"}, onNotify);
-        counter.init();
+        var counter = new Countree();
+        counter.setOptions(customTimeCounterOption);
+        counter.notifyAt({event:"onStart"}, onStart);
+        counter.notifyAt({event:"onFinish"}, onFinish);
+//        counter.init();
 
 
         window.restart = function () {
@@ -91,8 +92,11 @@
            console.log("user callback: , " + countResult.formattedTime().toString());
         }
 
-        function onNotify(countreeRef){
-            console.log("notified for countree: " + countreeRef);
+        function onStart(countreeRef){
+            console.log("START notified for countree: " + countreeRef.name);
+        }
+        function onFinish(countreeRef){
+            console.log("FINISHED notified for countree: " + countreeRef.name);
         }
     })();
 </script>
