@@ -18,25 +18,7 @@
 <script type="text/javascript">
 
     (function () {
-/*
-
-        var counterOption = {
-            direction: 'up',
-            startFrom: {
-                minutes: 0,
-                seconds: 10,
-                hours: 0,
-                days: 0
-            },
-            stopAt: {
-            },
-            updateIntervalInMilliseconds: 10,
-            name: 'my first counter'
-        };
-*/
-
-
-
+        
         var customTimeCounterOption = {
             name: 'my custom time count',
             updateIntervalInMilliseconds: 500,
@@ -65,16 +47,12 @@
             onInterval: onCountInterval
         };
 
-
-
-
         var counter = new Countree();
         counter.setOptions(customTimeCounterOption);
         counter.setIntervalCallback(onCountInterval);
         counter.notifyAt({event:"onStart"}, onStart);
         counter.notifyAt({event:"onFinish"}, onFinish);
         counter.init();
-
 
         window.restart = function () {
             counter.start();
