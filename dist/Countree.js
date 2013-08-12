@@ -78,10 +78,6 @@
             /**
              *
              */
-            onIntervalCallbackFromUser: null,
-            /**
-             *
-             */
             countDirection: 'up',
             /**
              *
@@ -93,7 +89,8 @@
         var options = {
             updateIntervalInMilliseconds: 1000,
             name: 'untitled',
-            stopWhenFinished: false
+            stopWhenFinished: false,
+            intervalSubscriptions: []
         };
 
         var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
@@ -105,8 +102,8 @@
             extendObjectBy(options, paramOptions);
         };
 
-        this.setIntervalCallback = function setIntervalCallback(onInterval) {
-            options.onInterval = onInterval;
+        this.subscribeOnInterval = function subscribeOnInterval(id, intervalCallback) {
+            options.intervalSubscriptions.push(intervalCallback);
         };
 
 //      update and extend the default options with the user config options (if provided via constructor)
@@ -125,7 +122,7 @@
             internalPropertiesHelper.updateInternalCountPropertiesFromOptions(that);
             checkIfOptionsHasBeenSet();
             countResult.init();
-            internalCounterProperties.onIntervalCallbackFromUser(countResult);
+            publishIntervalUpdate(countResult);
             internalCounterProperties.alreadyPassedMilliseconds = 0;
             countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_INIT);
         };
@@ -167,6 +164,12 @@
             countResult.countNotifier.addNotifier(notifyConfig, callback);
         };
 
+        function publishIntervalUpdate(countResult) {
+            for (var i = 0; i < options.intervalSubscriptions.length; i++) {
+                options.intervalSubscriptions[i] && options.intervalSubscriptions[i](countResult);
+            }
+        }
+
         function checkIfOptionsHasBeenSet() {
             if (!internalCounterProperties.userOptionsProvided) {
                 console.error(ERROR_MESSAGES.ERR_01_OPTIONS_NOT_SET);
@@ -196,7 +199,7 @@
                 // recalculate the countResult based on the updated internalCountProperties
                 countResult.update();
                 // lets invoke the users callback and provide the countResult as parameter
-                internalCounterProperties.onIntervalCallbackFromUser(countResult);
+                publishIntervalUpdate(countResult);
                 // check if counter finished. If so - clear the counting interval.
                 if (internalCounterProperties.isFinished) {
                     clearCountingInterval();
@@ -437,27 +440,14 @@
 
             countreeRef.name = options.name;
 
-            // Check if there are missing options missing. If so, provide feedback to the user via console.error()
-            checkOptionsAndThrowErrorLogMessagesIfNeeded();
-
             // The user provided some options, so lets set the corresponding value to the internalCountProperties
             internalCountPropertiesRef.userOptionsProvided = true;
             internalCountPropertiesRef.stopWhenFinished = !!options.stopWhenFinished;
-            internalCountPropertiesRef.onIntervalCallbackFromUser = options.onInterval || function () {
-            };
 
             // now that we have a options object, we need to fill some more internalCounterProperties
             // (because we will do all the calculations based on the internalCounterProperties instead on the options).
             fillInternalCounterPropertiesFromOptions();
         };
-
-        /**
-         * Throw some console.error() messages to the user's console if option-properties are not provided
-         */
-        function checkOptionsAndThrowErrorLogMessagesIfNeeded() {
-            // if the onInterval callback is missing
-            !options.onInterval && console.error(ERROR_MESSAGES.ERR_04_OPTIONS_CALLBACK_NOT_PROVIDED);
-        }
 
 
         function fillInternalCounterPropertiesFromOptions() {

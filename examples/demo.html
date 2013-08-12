@@ -8,7 +8,7 @@
 <body>
 
 
-<div id="counter" style="font-size: 20pt">--</div>
+<input type="text" id="counter" style="font-size: 20pt"></br>
 <input type="button" onclick="restart()" value="(re)start">
 <input type="button" onclick="suspend()" value="suspend">
 <input type="button" onclick="resume()" value="resume">
@@ -43,13 +43,11 @@
             updateIntervalInMilliseconds: 500,
             dateTime: {
                 date: new Date(2013, 3, 24, 22, 9,30)
-            },
-            onInterval: onCountInterval
+            }
         };
 
         var counter = new Countree();
         counter.setOptions(customTimeCounterOption);
-        counter.setIntervalCallback(onCountInterval);
         counter.notifyAt({event:"onStart"}, onStart);
         counter.notifyAt({event:"onFinish"}, onFinish);
         counter.init();
@@ -67,8 +65,12 @@
         };
 
 
-        function onCountInterval(countResult) {
+        function onCountIntervalDoConsole(countResult) {
            console.log("user callback: , " + countResult.formattedTime().toString());
+        }
+
+        function onCountIntervalDoUI(countResult) {
+           document.getElementById('counter').value = countResult.formattedTime().toString();
         }
 
         function onStart(countreeRef){
@@ -77,6 +79,9 @@
         function onFinish(countreeRef){
             console.log("FINISHED notified for countree: " + countreeRef.name);
         }
+
+        counter.subscribeOnInterval("console", onCountIntervalDoConsole);
+        counter.subscribeOnInterval("console", onCountIntervalDoUI);
     })();
 </script>
 

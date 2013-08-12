@@ -24,11 +24,11 @@ var countreeLib = require('../Countree.js');
 function createCounterFromObject(timeObject, callback) {
 
     var customTimeCounterOption = {
-        customTime: timeObject,
-        onInterval: callback
+        customTime: timeObject
     };
 
     var counter = new countreeLib.Countree();
+    counter.subscribeOnInterval("defaul", callback);
     counter.setOptions(customTimeCounterOption);
     counter.init();
     return counter;
