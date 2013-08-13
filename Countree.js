@@ -90,7 +90,9 @@
             updateIntervalInMilliseconds: 1000,
             name: 'untitled',
             stopWhenFinished: false,
-            intervalSubscriptions: []
+            intervalSubscriptions: [],
+            progressSubscriptions: [],
+            millisecondsToCount: 0
         };
 
         var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
@@ -104,6 +106,10 @@
 
         this.subscribeOnInterval = function subscribeOnInterval(id, intervalCallback) {
             options.intervalSubscriptions.push(intervalCallback);
+        };
+
+        this.subscribeOnProgress = function subscribeOnProgress(id, progressCallback) {
+            options.progressSubscriptions.push(progressCallback);
         };
 
 //      update and extend the default options with the user config options (if provided via constructor)
@@ -170,6 +176,21 @@
             }
         }
 
+        function publishProgressUpdate() {
+            //only calculate and publish progress in percentage if this is custom time counter
+            if(!!options.customTime && !options.dateTime) {
+                // also, only proceed if there is a defined start and end time
+                if(!!options.customTime.startFrom && !!options.customTime.stopAt) {
+                    var millisecondsToCount = Math.abs(internalCounterProperties.startCounterFromMilliseconds - internalCounterProperties.stopCounterAtMilliseconds);
+                    var progressPercentage = (internalCounterProperties.alreadyPassedMilliseconds / millisecondsToCount)*100;
+
+                    for (var i = 0; i < options.progressSubscriptions.length; i++) {
+                        options.progressSubscriptions[i] && options.progressSubscriptions[i](progressPercentage);
+                    }  
+                }
+            }
+        }
+
         function checkIfOptionsHasBeenSet() {
             if (!internalCounterProperties.userOptionsProvided) {
                 console.error(ERROR_MESSAGES.ERR_01_OPTIONS_NOT_SET);
@@ -198,8 +219,10 @@
                 internalCounterProperties.nowAsDate = now;
                 // recalculate the countResult based on the updated internalCountProperties
                 countResult.update();
-                // lets invoke the users callback and provide the countResult as parameter
+                // lets invoke the user interval-callbacks and provide the countResult as parameter
                 publishIntervalUpdate(countResult);
+                // invoke the user progress-callbacks and provide the processed percentages as paramter
+                publishProgressUpdate();
                 // check if counter finished. If so - clear the counting interval.
                 if (internalCounterProperties.isFinished) {
                     clearCountingInterval();
@@ -207,7 +230,7 @@
                 }
             }
 
-            // kick of the interval
+            // kick of the interval and save a reference for stopping/clearing
             internalCounterProperties.countingIntervalReference = setInterval(proceedInterval, options.updateIntervalInMilliseconds);
         }
 

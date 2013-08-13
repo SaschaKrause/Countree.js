@@ -24,8 +24,8 @@
             updateIntervalInMilliseconds: 500,
             customTime: {
                 startFrom: {
-                    minutes: 0,
-                    seconds: 3,
+                    minutes: 2,
+                    seconds: 43,
                     hours: 0,
                     days: 0
                 },
@@ -80,8 +80,13 @@
             console.log("FINISHED notified for countree: " + countreeRef.name);
         }
 
+        function onProgressChange(percent) {
+            console.log("progress made: " + Math.ceil(percent) + "%");
+        }
         counter.subscribeOnInterval("console", onCountIntervalDoConsole);
-        counter.subscribeOnInterval("console", onCountIntervalDoUI);
+        counter.subscribeOnInterval("ui", onCountIntervalDoUI);
+
+        counter.subscribeOnProgress("default", onProgressChange);
     })();
 </script>
 
