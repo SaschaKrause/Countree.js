@@ -170,6 +170,11 @@
             countResult.countNotifier.addNotifier(notifyConfig, callback);
         };
 
+
+        this.isCounting = function isCounting() {
+          return !!internalCounterProperties.countingIntervalReference  ;
+        };
+
         function publishIntervalUpdate(countResult) {
             for (var i = 0; i < options.intervalSubscriptions.length; i++) {
                 options.intervalSubscriptions[i] && options.intervalSubscriptions[i](countResult);
