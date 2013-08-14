@@ -19,7 +19,8 @@
     var COUNTER_STATE = {
         COUNTING: 'counting',
         SUSPENDED: 'suspended',
-        NOT_STARTED: 'not started'
+        NOT_STARTED: 'not started',
+        FINISHED: 'finished'
     };
 
     var ERROR_MESSAGES = {
@@ -138,10 +139,11 @@
          * and the newly calculated countResult is provided as parameter.
          */
         this.start = function start() {
+            this.state = COUNTER_STATE.COUNTING;
             // clear the interval (so that ONLY ONE COUNTING INTERVAL is present at a time - even if this method is invoked more than once)
             clearCountingInterval();
             countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_START);
-            this.init();
+            this.init();            
             internalCounterProperties.isFinished = false;
             countWithInterval(new Date(), false);
         };
@@ -150,6 +152,7 @@
          * Suspend this counter by clearing the counting interval.
          */
         this.suspend = function suspend() {
+            this.state = COUNTER_STATE.SUSPENDED;
             clearCountingInterval();
             countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_SUSPEND);
         };
@@ -159,6 +162,7 @@
          * currently not counting.
          */
         this.resume = function resume() {
+            this.state = COUNTER_STATE.COUNTING;
             if (!internalCounterProperties.countingIntervalReference) {
                 countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_RESUME);
                 countWithInterval(new Date(), true);
@@ -172,7 +176,7 @@
 
 
         this.isCounting = function isCounting() {
-          return !!internalCounterProperties.countingIntervalReference  ;
+          return !!internalCounterProperties.countingIntervalReference;
         };
 
         function publishIntervalUpdate(countResult) {
@@ -230,6 +234,7 @@
                 publishProgressUpdate();
                 // check if counter finished. If so - clear the counting interval.
                 if (internalCounterProperties.isFinished) {
+                    this.state = COUNTER_STATE.FINISHED;
                     clearCountingInterval();
                     countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_FINISH);
                 }
