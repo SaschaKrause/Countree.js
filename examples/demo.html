@@ -12,6 +12,7 @@
 <input type="button" onclick="restart()" value="(re)start">
 <input type="button" onclick="suspend()" value="suspend">
 <input type="button" onclick="resume()" value="resume">
+<input type="button" onclick="reset()" value="reset">
 
 
 <script type="text/javascript" src="../Countree.js"></script>
@@ -62,6 +63,10 @@
 
         window.suspend = function () {
             counter.suspend();
+        };
+
+        window.reset = function () {
+            counter.reset();
         };
 
 

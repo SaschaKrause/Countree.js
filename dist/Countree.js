@@ -179,6 +179,13 @@
           return !!internalCounterProperties.countingIntervalReference;
         };
 
+        this.reset = function reset() {
+            this.state = COUNTER_STATE.NOT_STARTED;
+            clearCountingInterval();
+            this.init();
+            countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_RESET);
+        };
+
         function publishIntervalUpdate(countResult) {
             for (var i = 0; i < options.intervalSubscriptions.length; i++) {
                 options.intervalSubscriptions[i] && options.intervalSubscriptions[i](countResult);
