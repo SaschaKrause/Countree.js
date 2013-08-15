@@ -187,6 +187,13 @@
             publishProgressUpdate();
         };
 
+        /**
+        * return a countResult of the current value
+        */
+        this.getSnapshot = function getSnapshot() {
+            return countResult || {};
+        };
+
         function publishIntervalUpdate(countResult) {
             for (var i = 0; i < options.intervalSubscriptions.length; i++) {
                 options.intervalSubscriptions[i] && options.intervalSubscriptions[i](countResult);

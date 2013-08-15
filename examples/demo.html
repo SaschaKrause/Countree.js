@@ -13,6 +13,7 @@
 <input type="button" onclick="suspend()" value="suspend">
 <input type="button" onclick="resume()" value="resume">
 <input type="button" onclick="reset()" value="reset">
+<input type="button" onclick="snapshot()" value="snapshot">
 
 
 <script type="text/javascript" src="../Countree.js"></script>
@@ -67,6 +68,10 @@
 
         window.reset = function () {
             counter.reset();
+        };
+
+        window.snapshot = function () {
+            console.log("SNAPSHOT:" + counter.getSnapshot().formattedTime().toString());
         };
 
 
