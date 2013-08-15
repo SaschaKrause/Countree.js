@@ -242,7 +242,7 @@
                 publishProgressUpdate();
                 // check if counter finished. If so - clear the counting interval.
                 if (internalCounterProperties.isFinished) {
-                    this.state = COUNTER_STATE.FINISHED;
+                    that.state = COUNTER_STATE.FINISHED;
                     clearCountingInterval();
                     countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_FINISH);
                 }
