@@ -184,6 +184,7 @@
             clearCountingInterval();
             this.init();
             countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_RESET);
+            publishProgressUpdate();
         };
 
         function publishIntervalUpdate(countResult) {
