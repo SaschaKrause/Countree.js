@@ -185,12 +185,8 @@
         /**
         * return a countResult of the current value
         */
-        this.getResultSnapshot = function getResultSnapshot() {
+        this.getSnapshot = function getSnapshot() {
             return countResult || {};
-        };
-
-        this.getProgressSnapshot = function getProgressSnapshot() {
-            return progressPercentage;
         };
 
         function publishIntervalUpdate(countResult) {
