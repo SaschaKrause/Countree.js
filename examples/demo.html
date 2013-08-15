@@ -25,13 +25,13 @@
             name: 'my custom time count',
             updateIntervalInMilliseconds: 500,
             customTime: {
-                startFrom: {
+                stopAt: {
                     minutes: 2,
                     seconds: 43,
                     hours: 0,
                     days: 0
                 },
-                stopAt: {
+                startFrom: {
                     seconds: 0
                 }
             },
@@ -81,6 +81,7 @@
 
         function onCountIntervalDoUI(countResult) {
            document.getElementById('counter').value = countResult.formattedTime().toString();
+           console.log("progress made new: " + Math.ceil(countResult.progress) + "%");
         }
 
         function onStart(countreeRef){
@@ -90,13 +91,8 @@
             console.log("FINISHED notified for countree: " + countreeRef.name);
         }
 
-        function onProgressChange(percent) {
-            console.log("progress made: " + Math.ceil(percent) + "%");
-        }
         counter.subscribeOnInterval("console", onCountIntervalDoConsole);
         counter.subscribeOnInterval("ui", onCountIntervalDoUI);
-
-        counter.subscribeOnProgress("default", onProgressChange);
     })();
 </script>
 

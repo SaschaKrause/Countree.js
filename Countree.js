@@ -92,11 +92,11 @@
             name: 'untitled',
             stopWhenFinished: false,
             intervalSubscriptions: [],
-            progressSubscriptions: [],
             millisecondsToCount: 0
         };
 
         var internalPropertiesHelper = new InternalPropertiesHelper(options, internalCounterProperties);
+        var progressPercentage;
 
         this.state = COUNTER_STATE.NOT_STARTED;
 
@@ -109,17 +109,13 @@
             options.intervalSubscriptions.push(intervalCallback);
         };
 
-        this.subscribeOnProgress = function subscribeOnProgress(id, progressCallback) {
-            options.progressSubscriptions.push(progressCallback);
-        };
-
 //      update and extend the default options with the user config options (if provided via constructor)
         paramOptions && this.setOptions(paramOptions);
 
 
         // this countResult instance contain all information about the current counter values (e.g. milliseconds left/to go).
         // This result will be provided as parameter to the users interval callback (which is invoked at each interval tick).
-        var countResult = new CountResult(this, internalCounterProperties);
+        var countResult = new CountResult(this, internalCounterProperties, options);
 
         /**
          * Init the countree by calling the user's onInterval-callback ONCE without starting the counter.
@@ -184,34 +180,22 @@
             clearCountingInterval();
             this.init();
             countResult.countNotifier.fireNotificationEvent(countResult.countNotifier.EVENT.ON_RESET);
-            publishProgressUpdate();
         };
 
         /**
         * return a countResult of the current value
         */
-        this.getSnapshot = function getSnapshot() {
+        this.getResultSnapshot = function getResultSnapshot() {
             return countResult || {};
+        };
+
+        this.getProgressSnapshot = function getProgressSnapshot() {
+            return progressPercentage;
         };
 
         function publishIntervalUpdate(countResult) {
             for (var i = 0; i < options.intervalSubscriptions.length; i++) {
                 options.intervalSubscriptions[i] && options.intervalSubscriptions[i](countResult);
-            }
-        }
-
-        function publishProgressUpdate() {
-            //only calculate and publish progress in percentage if this is custom time counter
-            if(!!options.customTime && !options.dateTime) {
-                // also, only proceed if there is a defined start and end time
-                if(!!options.customTime.startFrom && !!options.customTime.stopAt) {
-                    var millisecondsToCount = Math.abs(internalCounterProperties.startCounterFromMilliseconds - internalCounterProperties.stopCounterAtMilliseconds);
-                    var progressPercentage = (internalCounterProperties.alreadyPassedMilliseconds / millisecondsToCount)*100;
-
-                    for (var i = 0; i < options.progressSubscriptions.length; i++) {
-                        options.progressSubscriptions[i] && options.progressSubscriptions[i](progressPercentage);
-                    }  
-                }
             }
         }
 
@@ -245,8 +229,6 @@
                 countResult.update();
                 // lets invoke the user interval-callbacks and provide the countResult as parameter
                 publishIntervalUpdate(countResult);
-                // invoke the user progress-callbacks and provide the processed percentages as paramter
-                publishProgressUpdate();
                 // check if counter finished. If so - clear the counting interval.
                 if (internalCounterProperties.isFinished) {
                     that.state = COUNTER_STATE.FINISHED;
@@ -266,10 +248,11 @@
      *
      * @constructor
      */
-    function CountResult(countreeRef, internalPropertiesRef) {
+    function CountResult(countreeRef, internalPropertiesRef, options) {
         var formattedTimeTmp = new FormattedTime();
         var that = this;
         this.calculatedMilliseconds = 0;
+        this.progress = 0;
         this.countNotifier = new CountNotifier(countreeRef, internalPropertiesRef);
 
         /**
@@ -286,6 +269,7 @@
         this.update = function update() {
             this.calculatedMilliseconds = calculateResultAndUpdateInternalProperties(internalPropertiesRef.countDirection);
             formattedTimeTmp.update(this.calculatedMilliseconds);
+            updateProgress.call(this);
         };
 
         /**
@@ -296,6 +280,17 @@
             return formattedTimeTmp;
         };
 
+
+        function updateProgress() {
+            //only calculate and publish progress in percentage if this is custom time counter
+            if(!!options.customTime && !options.dateTime) {
+                // also, only proceed if there is a defined start and end time
+                if(!!options.customTime.startFrom && !!options.customTime.stopAt) {
+                    var millisecondsToCount = Math.abs(internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.stopCounterAtMilliseconds);
+                    this.progress = (this.calculatedMilliseconds / millisecondsToCount)*100;
+                }
+            }
+        }
 
         function calculateResultAndUpdateInternalProperties(direction) {
             var result = 0;
