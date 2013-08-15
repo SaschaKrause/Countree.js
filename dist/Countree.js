@@ -283,7 +283,7 @@
                 // also, only proceed if there is a defined start and end time
                 if(!!options.customTime.startFrom && !!options.customTime.stopAt) {
                     var millisecondsToCount = Math.abs(internalPropertiesRef.startCounterFromMilliseconds - internalPropertiesRef.stopCounterAtMilliseconds);
-                    this.progress = (this.calculatedMilliseconds / millisecondsToCount)*100;
+                    this.progress = (internalPropertiesRef.alreadyPassedMilliseconds / millisecondsToCount)*100;
                 }
             }
         }
