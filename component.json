@@ -1,14 +1,29 @@
 {
-    "name": "Countree",
-    "version": "0.0.1",
-    "main": [
-        "./dist/Countree.js"
-    ],
-    "author": {
-        "name": "Sascha Krause",
-        "web": "http://github.com/SaschaKrause/"
-    },
-    "keywords": [
-        "counter"
-    ]
+  "name": "Countree",
+  "version": "0.0.1",
+  "main": [
+    "./dist/Countree.js"
+  ],
+  "author": {
+    "name": "Sascha Krause",
+    "web": "http://github.com/SaschaKrause/"
+  },
+  "keywords": [
+    "counter",
+    "countdown",
+    "counting"
+  ],
+  "homepage": "https://github.com/SaschaKrause/Countree.js",
+  "authors": [
+    "Sascha Krause <mr.sascha.krause@gmail.com>"
+  ],
+  "description": "Counting library with lots of usefull stuff",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
 }
