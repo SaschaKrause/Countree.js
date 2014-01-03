@@ -13,6 +13,7 @@
 <input type="button" onclick="suspend()" value="suspend">
 <input type="button" onclick="resume()" value="resume">
 <input type="button" onclick="reset()" value="reset">
+<input type="button" onclick="useCountUp()" value="change direction">
 <input type="button" onclick="snapshot()" value="snapshot">
 
 
@@ -21,18 +22,36 @@
 
     (function () {
         
-        var customTimeCounterOption = {
+        var customTimeCountDOWNOption = {
             name: 'my custom time count',
             updateIntervalInMilliseconds: 500,
             customTime: {
                 startFrom: {
-                    minutes: 2,
+                    minutes: 0,
                     seconds: 43,
                     hours: 0,
                     days: 0
                 },
                 stopAt: {
                     seconds: 0
+                }
+            },
+            stopWhenFinished: true
+
+        };
+
+        var customTimeCountUPOption = {
+            name: 'my custom time count',
+            updateIntervalInMilliseconds: 500,
+            customTime: {
+                startFrom: {
+                    minutes: 0,
+                    seconds: 43,
+                    hours: 0,
+                    days: 0
+                },
+                stopAt: {
+                    hours: 0
                 }
             },
             stopWhenFinished: true
@@ -49,7 +68,7 @@
         };
 
         var counter = new Countree();
-        counter.setOptions(customTimeCounterOption);
+        counter.setOptions(customTimeCountDOWNOption);
         counter.notifyAt({event:"onStart"}, onStart);
         counter.notifyAt({event:"onFinish"}, onFinish);
         counter.init();
@@ -74,6 +93,10 @@
             console.log("SNAPSHOT:" + counter.getSnapshot().formattedTime().toString());
         };
 
+        window.useCountUp = function() {
+            counter.setOptions(customTimeCountUPOption);
+            counter.init();
+        }
 
         function onCountIntervalDoConsole(countResult) {
            console.log("user callback: , " + countResult.formattedTime().toString());

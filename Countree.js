@@ -490,7 +490,6 @@
 
 
         function fillInternalCounterPropertiesFromOptions() {
-
             var isCustomTime = !!options.customTime && !options.dateTime;
             var isDateTime = !!options.dateTime && !options.customTime;
 
@@ -526,6 +525,9 @@
         function swapCountDirectionIfNeeded() {
             if (internalCountPropertiesRef.startCounterFromMilliseconds > internalCountPropertiesRef.stopCounterAtMilliseconds) {
                 internalCountPropertiesRef.countDirection = 'down';
+            }
+            else {
+                internalCountPropertiesRef.countDirection = 'up';   
             }
         }
     }
