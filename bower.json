@@ -1,5 +1,5 @@
 {
-  "name": "countree",
+  "name": "countree-js",
   "main": "./dist/Countree.js",
   "version": "0.0.1",
   "homepage": "https://github.com/SaschaKrause/Countree.js",
