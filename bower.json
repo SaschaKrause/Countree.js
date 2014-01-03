@@ -1,0 +1,21 @@
+{
+  "name": "countree",
+  "main": "./dist/Countree.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/SaschaKrause/Countree.js",
+  "authors": [
+    "Sascha Krause <mr.sascha.krause@gmail.com>"
+  ],
+  "description": "Powerfull Counter library",
+  "keywords": [
+    "counter"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
